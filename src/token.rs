@@ -30,36 +30,35 @@ pub enum OperatorKind {
 #[derive(Display)]
 pub enum PunctuationKind {
     Assigment,
-    MulVars,
+    Comma,
     EndExp,
-    Declaration,
-    Apostrophe,
-    Dot,
 }
 
 #[derive(Display)]
 pub enum KeywordKind {
     If,
+    Int,
+    Float,
+    Char,
     Then,
+    Type,
     Else,
+    Elsif,
     While,
+    For,
     Do,
     Main,
-    Begin,
-    End,
-    Repeat,
-    Until,
+    Void,
 }
 
 #[derive(Display)]
 pub enum ErrorKind {
-    Undefined,
-    UnclosedComment,
     UnclosedChar,
     InvalidTokenAfterExclamation,
     FractionEndedWithADot,
     EndedWithEExpoent,
     EndedAfterExpoentSign,
+    MissingEqual,
     UnknownToken,
 }
 
@@ -76,25 +75,21 @@ pub enum Token {
         column: usize,
     },
     Relop {
-        value: String,
         kind: RelopKind,
         line: usize,
         column: usize,
     },
     Operator {
-        value: String,
         kind: OperatorKind,
         line: usize,
         column: usize,
     },
     Punctuation {
-        value: String,
         kind: PunctuationKind,
         line: usize,
         column: usize,
     },
     Keyword {
-        value: String,
         kind: KeywordKind,
         line: usize,
         column: usize,
@@ -130,51 +125,71 @@ impl Display for Token {
                     value, kind, line, column,
                 );
             }
-            Self::Relop {
-                value,
-                kind,
-                line,
-                column,
-            } => {
+            Self::Relop { kind, line, column } => {
+                let value = match kind {
+                    RelopKind::GT => ">".to_string(),
+                    RelopKind::LT => "<".to_string(),
+                    RelopKind::EQ => "==".to_string(),
+                    RelopKind::NE => "!=".to_string(),
+                    RelopKind::LE => "<=".to_string(),
+                    RelopKind::GE => ">=".to_string(),
+                };
+
                 let _ = write!(
                     f,
-                    "<Relop, value={}, kind={}, line={}, column={}>",
+                    "<Relop, value='{}', kind={}, line={}, column={}>",
                     value, kind, line, column,
                 );
             }
-            Self::Operator {
-                value,
-                kind,
-                line,
-                column,
-            } => {
+            Self::Operator { kind, line, column } => {
+                let value = match kind {
+                    OperatorKind::Sum => "+".to_string(),
+                    OperatorKind::Sub => "-".to_string(),
+                    OperatorKind::Mult => "*".to_string(),
+                    OperatorKind::Div => "/".to_string(),
+                    OperatorKind::Exp => "**".to_string(),
+                    OperatorKind::Paresq => "(".to_string(),
+                    OperatorKind::Pardir => ")".to_string(),
+                };
+
                 let _ = write!(
                     f,
-                    "<Operator, value={}, kind={}, line={}, column={}>",
+                    "<Operator, value='{}', kind={}, line={}, column={}>",
                     value, kind, line, column,
                 );
             }
-            Self::Punctuation {
-                value,
-                kind,
-                line,
-                column,
-            } => {
+            Self::Punctuation { kind, line, column } => {
+                let value = match kind {
+                    PunctuationKind::Assigment => ":=".to_string(),
+                    PunctuationKind::Comma => ",".to_string(),
+                    PunctuationKind::EndExp => ";".to_string(),
+                };
+
                 let _ = write!(
                     f,
-                    "<Punctuation, value={}, kind={}, line={}, column={}>",
+                    "<Punctuation, value='{}', kind={}, line={}, column={}>",
                     value, kind, line, column,
                 );
             }
-            Self::Keyword {
-                value,
-                kind,
-                line,
-                column,
-            } => {
+            Self::Keyword { kind, line, column } => {
+                let value = match kind {
+                    KeywordKind::If => "if".to_string(),
+                    KeywordKind::Int => "int".to_string(),
+                    KeywordKind::Float => "float".to_string(),
+                    KeywordKind::Char => "char".to_string(),
+                    KeywordKind::Then => "then".to_string(),
+                    KeywordKind::Type => "tipo".to_string(),
+                    KeywordKind::Else => "else".to_string(),
+                    KeywordKind::Elsif => "elsif".to_string(),
+                    KeywordKind::While => "while".to_string(),
+                    KeywordKind::For => "for".to_string(),
+                    KeywordKind::Do => "do".to_string(),
+                    KeywordKind::Main => "main".to_string(),
+                    KeywordKind::Void => "void".to_string(),
+                };
                 let _ = write!(
                     f,
-                    "<Keyword, value={}, kind={}, line={}, column={}>",
+                    "<Keyword, value='{}', kind={}, line={}, column={}>",
                     value, kind, line, column,
                 );
             }
