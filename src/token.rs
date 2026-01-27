@@ -1,12 +1,12 @@
 use std::fmt::{Display, Error, Formatter};
 
-#[derive(Display)]
+#[derive(Display, Clone)]
 pub enum NumberKind {
     Integer,
     Float,
 }
 
-#[derive(Display)]
+#[derive(Display, Clone)]
 pub enum RelopKind {
     GT,
     LT,
@@ -16,7 +16,7 @@ pub enum RelopKind {
     GE,
 }
 
-#[derive(Display)]
+#[derive(Display, Clone)]
 pub enum OperatorKind {
     Sum,
     Sub,
@@ -27,7 +27,7 @@ pub enum OperatorKind {
     Pardir,
 }
 
-#[derive(Display)]
+#[derive(Display, Clone)]
 pub enum PunctuationKind {
     Assigment,
     Comma,
@@ -36,7 +36,7 @@ pub enum PunctuationKind {
     EndBlock,
 }
 
-#[derive(Display)]
+#[derive(Display, Clone)]
 pub enum KeywordKind {
     If,
     Int,
@@ -53,7 +53,7 @@ pub enum KeywordKind {
     Void,
 }
 
-#[derive(Display)]
+#[derive(Display, Clone)]
 pub enum ErrorKind {
     UnclosedChar,
     InvalidTokenAfterExclamation,
@@ -64,6 +64,7 @@ pub enum ErrorKind {
     UnknownToken,
 }
 
+#[derive(Clone)]
 pub enum Token {
     Id {
         value: String,

@@ -1,3 +1,5 @@
+use std::{cell::RefCell, collections::HashMap, rc::Rc};
+
 use crate::token::{
     ErrorKind, KeywordKind, NumberKind, OperatorKind, PunctuationKind, RelopKind, Token,
 };
@@ -13,11 +15,11 @@ pub struct Lexer {
     lookahead: Option<char>,
     prev_column: usize,
     prev_line: usize,
-    symbol_table: Vec<(u32, Token)>,
+    symbol_table: Rc<RefCell<HashMap<String, Token>>>,
 }
 
 impl Lexer {
-    pub fn new(file_content: String) -> Self {
+    pub fn new(file_content: String, symbol_table: Rc<RefCell<HashMap<String, Token>>>) -> Self {
         Self {
             file_content: file_content.chars().collect(),
             ini: 0,
@@ -29,7 +31,7 @@ impl Lexer {
             lookahead: None,
             prev_column: 0,
             prev_line: 0,
-            symbol_table: vec![],
+            symbol_table,
         }
     }
 
@@ -137,6 +139,40 @@ impl Lexer {
 
     fn is_letter_digit_or_underscore(&self, ch: char) -> bool {
         ch.is_ascii_alphabetic() || ch.is_ascii_digit() || ch == '_'
+    }
+
+    fn insert_table(&mut self, token: Token) -> bool {
+        let mut table = self
+            .symbol_table
+            .try_borrow_mut()
+            .expect("Failed to borrow symbol table.");
+
+        match token.clone() {
+            Token::Id { value, .. } => {
+                if !table.contains_key(&value) {
+                    table.insert(value, token).is_none()
+                } else {
+                    false
+                }
+            }
+            Token::Char { value, .. } => {
+                if !table.contains_key(&value.to_string()) {
+                    table.insert(value.to_string(), token).is_none()
+                } else {
+                    false
+                }
+            }
+            Token::Number { value, .. } => {
+                if !table.contains_key(&value) {
+                    table.insert(value, token).is_none()
+                } else {
+                    false
+                }
+            }
+            _ => {
+                panic!("Token is not insertable.");
+            }
+        }
     }
 
     pub fn get_next_token(&mut self) -> Token {
@@ -263,7 +299,7 @@ impl Lexer {
                 }
                 // v4
                 6 => {
-                    return Token::Char {
+                    let token = Token::Char {
                         value: self
                             .get_value()
                             .strip_prefix("'")
@@ -276,6 +312,10 @@ impl Lexer {
                         line: self.line,
                         column: self.get_column(),
                     };
+
+                    //TODO inserir na tabela
+                    self.insert_table(token.clone());
+                    return token;
                 }
                 // u2
                 7 => {
@@ -292,12 +332,15 @@ impl Lexer {
                 }
                 // u3
                 8 => {
-                    //TODO inserir caso não exista na tabela de simbolos
-                    return Token::Id {
+                    let token = Token::Id {
                         value: self.get_value(),
                         line: self.line,
                         column: self.get_column(),
                     };
+
+                    self.insert_table(token.clone());
+
+                    return token;
                 }
                 // t2
                 9 => {
@@ -557,12 +600,16 @@ impl Lexer {
                 }
                 // b3
                 31 => {
-                    return Token::Number {
+                    let token = Token::Number {
                         value: self.get_value(),
                         kind: NumberKind::Integer,
                         line: self.line,
                         column: self.get_column(),
                     };
+
+                    self.insert_table(token.clone());
+
+                    return token;
                 }
                 // b5
                 32 => {
@@ -593,12 +640,16 @@ impl Lexer {
                 }
                 // b8
                 33 => {
-                    return Token::Number {
+                    let token = Token::Number {
                         value: self.get_value(),
                         kind: NumberKind::Float,
                         line: self.line,
                         column: self.get_column(),
                     };
+
+                    self.insert_table(token.clone());
+
+                    return token;
                 }
                 // b6
                 34 => {
