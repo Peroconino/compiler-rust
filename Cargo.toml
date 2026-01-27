@@ -3,5 +3,18 @@ name = "front-end-compiler"
 version = "0.1.0"
 edition = "2024"
 
+[[bin]]
+name = "lexer"
+path = "src/lexer/main.rs"
+
+[[bin]]
+name = "sintatico"
+path = "src/syntactic/main.rs"
+
+[lib]
+name = "compiler"
+path = "src/lib.rs"
+
 [dependencies]
-enum-display-derive = "0.1.1"
+strum = "0.27"
+strum_macros = "0.27"

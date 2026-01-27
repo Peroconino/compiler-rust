@@ -1,12 +1,14 @@
 use std::fmt::{Display, Error, Formatter};
 
-#[derive(Display, Clone)]
+use strum_macros::Display;
+
+#[derive(Debug, Display, Clone, PartialEq, Eq, Hash)]
 pub enum NumberKind {
     Integer,
     Float,
 }
 
-#[derive(Display, Clone)]
+#[derive(Debug, Display, Clone, PartialEq, Eq, Hash)]
 pub enum RelopKind {
     GT,
     LT,
@@ -16,7 +18,7 @@ pub enum RelopKind {
     GE,
 }
 
-#[derive(Display, Clone)]
+#[derive(Debug, Display, Clone, PartialEq, Eq, Hash)]
 pub enum OperatorKind {
     Sum,
     Sub,
@@ -27,7 +29,7 @@ pub enum OperatorKind {
     Pardir,
 }
 
-#[derive(Display, Clone)]
+#[derive(Debug, Display, Clone, PartialEq, Eq, Hash)]
 pub enum PunctuationKind {
     Assigment,
     Comma,
@@ -36,7 +38,7 @@ pub enum PunctuationKind {
     EndBlock,
 }
 
-#[derive(Display, Clone)]
+#[derive(Debug, Display, Clone, PartialEq, Eq, Hash)]
 pub enum KeywordKind {
     If,
     Int,
@@ -53,7 +55,7 @@ pub enum KeywordKind {
     Void,
 }
 
-#[derive(Display, Clone)]
+#[derive(Debug, Display, Clone, PartialEq, Eq, Hash)]
 pub enum ErrorKind {
     UnclosedChar,
     InvalidTokenAfterExclamation,
@@ -64,7 +66,7 @@ pub enum ErrorKind {
     UnknownToken,
 }
 
-#[derive(Clone)]
+#[derive(Debug, Clone, PartialEq, Eq, Hash)]
 pub enum Token {
     Id {
         value: String,
@@ -102,7 +104,7 @@ pub enum Token {
         line: usize,
         column: usize,
     },
-    Eof {},
+    Eof,
     Error {
         value: Option<String>,
         kind: ErrorKind,

@@ -1,6 +1,7 @@
 use std::{cell::RefCell, collections::HashMap, rc::Rc};
+mod token;
 
-use crate::token::{
+pub use token::{
     ErrorKind, KeywordKind, NumberKind, OperatorKind, PunctuationKind, RelopKind, Token,
 };
 
@@ -141,7 +142,7 @@ impl Lexer {
         ch.is_ascii_alphabetic() || ch.is_ascii_digit() || ch == '_'
     }
 
-    fn insert_table(&mut self, token: Token) -> bool {
+    fn insert_table(&mut self, token: Token) {
         let mut table = self
             .symbol_table
             .try_borrow_mut()
@@ -149,25 +150,13 @@ impl Lexer {
 
         match token.clone() {
             Token::Id { value, .. } => {
-                if !table.contains_key(&value) {
-                    table.insert(value, token).is_none()
-                } else {
-                    false
-                }
+                table.entry(value).or_insert(token);
             }
             Token::Char { value, .. } => {
-                if !table.contains_key(&value.to_string()) {
-                    table.insert(value.to_string(), token).is_none()
-                } else {
-                    false
-                }
+                table.entry(value.to_string()).or_insert(token);
             }
             Token::Number { value, .. } => {
-                if !table.contains_key(&value) {
-                    table.insert(value, token).is_none()
-                } else {
-                    false
-                }
+                table.entry(value).or_insert(token);
             }
             _ => {
                 panic!("Token is not insertable.");
@@ -265,7 +254,7 @@ impl Lexer {
                     }; // w2
                 }
                 3 => {
-                    return Token::Eof {};
+                    return Token::Eof;
                 }
                 // v2
                 4 => {

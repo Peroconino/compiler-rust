@@ -1,17 +1,11 @@
-#[macro_use]
-extern crate enum_display_derive;
-
 use std::cell::RefCell;
 use std::collections::HashMap;
 use std::fs;
 use std::io;
 use std::rc::Rc;
 
-use lexer::Lexer;
+use compiler::{Lexer, Token};
 
-use token::Token;
-
-mod lexer;
 mod token;
 
 fn main() -> io::Result<()> {
@@ -29,7 +23,7 @@ fn main() -> io::Result<()> {
         println!("{}", token);
 
         match token {
-            Token::Eof {} => {
+            Token::Eof => {
                 break;
             }
             Token::Error {
