@@ -32,6 +32,8 @@ pub enum PunctuationKind {
     Assigment,
     Comma,
     EndExp,
+    BeginBlock,
+    EndBlock,
 }
 
 #[derive(Display)]
@@ -65,6 +67,11 @@ pub enum ErrorKind {
 pub enum Token {
     Id {
         value: String,
+        line: usize,
+        column: usize,
+    },
+    Char {
+        value: char,
         line: usize,
         column: usize,
     },
@@ -111,7 +118,22 @@ impl Display for Token {
                 line,
                 column,
             } => {
-                let _ = write!(f, "<Id, value={}, line={}, column={}>", value, line, column,);
+                let _ = write!(
+                    f,
+                    "<Id, value='{}', line={}, column={}>",
+                    value, line, column,
+                );
+            }
+            Self::Char {
+                value,
+                line,
+                column,
+            } => {
+                let _ = write!(
+                    f,
+                    "<Char, value='{}', line={}, column={}>",
+                    value, line, column
+                );
             }
             Self::Number {
                 value,
@@ -121,7 +143,7 @@ impl Display for Token {
             } => {
                 let _ = write!(
                     f,
-                    "<Number, value={}, kind={}, line={}, column={}>",
+                    "<Number, value='{}', kind={}, line={}, column={}>",
                     value, kind, line, column,
                 );
             }
@@ -163,6 +185,8 @@ impl Display for Token {
                     PunctuationKind::Assigment => ":=".to_string(),
                     PunctuationKind::Comma => ",".to_string(),
                     PunctuationKind::EndExp => ";".to_string(),
+                    PunctuationKind::BeginBlock => "[".to_string(),
+                    PunctuationKind::EndBlock => "]".to_string(),
                 };
 
                 let _ = write!(
@@ -201,7 +225,7 @@ impl Display for Token {
             } => {
                 let _ = write!(
                     f,
-                    "<Error, value={}, kind={}, line={}, column={}>",
+                    "<Error, value='{}', kind={}, line={}, column={}>",
                     value.clone().unwrap_or("".to_owned()),
                     kind,
                     line,

@@ -1,8 +1,30 @@
-()'c'asdasdf***  asd
+int main() [
+  char c;
+  int x;
+  float y;
 
-asdwer-+/
-{% asdasd %}
-,;   {%
-asd
-asd
-%}         ;
+  c := 'a';
+  x := 67;
+  y := 54.90E-22;
+
+  if(x>y)[
+    y := y * 2;
+  ]elsif(c=='a')[
+    x := x + 2;
+  ]else[
+    c := 'b';
+  ]
+
+  {%comentario%}
+  {%
+    comentario
+    de
+    multiplas
+    linhas
+  %}
+
+  do [
+    x := x + 1;
+  ]while (x < 100);
+
+]

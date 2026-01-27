@@ -13,6 +13,7 @@ pub struct Lexer {
     lookahead: Option<char>,
     prev_column: usize,
     prev_line: usize,
+    symbol_table: Vec<(u32, Token)>,
 }
 
 impl Lexer {
@@ -28,10 +29,11 @@ impl Lexer {
             lookahead: None,
             prev_column: 0,
             prev_line: 0,
+            symbol_table: vec![],
         }
     }
 
-    pub fn prox_char(&mut self) -> Option<char> {
+    fn prox_char(&mut self) -> Option<char> {
         if self.prox < self.file_content.len() {
             if self.has_lookahead {
                 self.has_lookahead = false;
@@ -122,7 +124,11 @@ impl Lexer {
     }
 
     fn get_column(&self) -> usize {
-        self.column - (self.prox - self.ini)
+        if self.prox - self.ini <= self.column {
+            self.column - (self.prox - self.ini)
+        } else {
+            self.column
+        }
     }
 
     fn get_value(&self) -> String {
@@ -176,7 +182,7 @@ impl Lexer {
                         } else if ch == ':' {
                             state = 27; // z2
                         } else if ch.is_ascii_digit() {
-                            state = 29;
+                            state = 29; // b2
                         } else if ch == 'm' {
                             state = 36; // d2
                         } else if ch == 'v' {
@@ -195,6 +201,10 @@ impl Lexer {
                             state = 80; // n2
                         } else if ch == 'f' {
                             state = 83; // o2
+                        } else if ch == '[' {
+                            state = 92; // p2
+                        } else if ch == ']' {
+                            state = 93; // y2
                         } else if ch.is_ascii_alphabetic() || ch == '_' {
                             state = 7; // u2
                         }
@@ -242,6 +252,7 @@ impl Lexer {
                     {
                         state = 6; //v4
                     } else {
+                        self.trata_lookahead();
                         return Token::Error {
                             value: Some(self.get_value()),
                             kind: ErrorKind::UnclosedChar,
@@ -252,9 +263,16 @@ impl Lexer {
                 }
                 // v4
                 6 => {
-                    // TODO inserir na tabela de simbolos caso nao exista
-                    return Token::Id {
-                        value: self.get_value(),
+                    return Token::Char {
+                        value: self
+                            .get_value()
+                            .strip_prefix("'")
+                            .unwrap()
+                            .strip_suffix("'")
+                            .unwrap()
+                            .chars()
+                            .last()
+                            .unwrap(),
                         line: self.line,
                         column: self.get_column(),
                     };
@@ -263,7 +281,7 @@ impl Lexer {
                 7 => {
                     c = self.prox_char();
                     if let Some(ch) = c {
-                        if !(ch.is_ascii_alphabetic() || ch.is_ascii_digit() || ch == '_') {
+                        if !(self.is_letter_digit_or_underscore(ch)) {
                             state = 8; // u3
                             self.trata_lookahead();
                         }
@@ -428,6 +446,7 @@ impl Lexer {
                     {
                         state = 24; // q3
                     } else {
+                        self.trata_lookahead();
                         return Token::Error {
                             value: Some(self.get_value()),
                             kind: ErrorKind::MissingEqual,
@@ -468,6 +487,7 @@ impl Lexer {
                     {
                         state = 28; // z3
                     } else {
+                        self.trata_lookahead();
                         return Token::Error {
                             value: Some(self.get_value()),
                             kind: ErrorKind::MissingEqual,
@@ -514,6 +534,7 @@ impl Lexer {
                             self.trata_lookahead();
                             state = 33; // b8
                         } else {
+                            self.trata_lookahead();
                             return Token::Error {
                                 value: Some(self.get_value()),
                                 kind: ErrorKind::FractionEndedWithADot,
@@ -525,6 +546,7 @@ impl Lexer {
                         self.trata_lookahead();
                         state = 33; // b8
                     } else {
+                        self.trata_lookahead();
                         return Token::Error {
                             value: Some(self.get_value()),
                             kind: ErrorKind::FractionEndedWithADot,
@@ -551,6 +573,7 @@ impl Lexer {
                         } else if ch.is_ascii_digit() {
                             state = 35; // b7
                         } else {
+                            self.trata_lookahead();
                             return Token::Error {
                                 value: Some(self.get_value()),
                                 kind: ErrorKind::EndedWithEExpoent,
@@ -559,6 +582,7 @@ impl Lexer {
                             };
                         }
                     } else {
+                        self.trata_lookahead();
                         return Token::Error {
                             value: Some(self.get_value()),
                             kind: ErrorKind::EndedWithEExpoent,
@@ -584,6 +608,7 @@ impl Lexer {
                     {
                         state = 35; // b7 
                     } else {
+                        self.trata_lookahead();
                         return Token::Error {
                             value: Some(self.get_value()),
                             kind: ErrorKind::EndedAfterExpoentSign,
@@ -915,7 +940,7 @@ impl Lexer {
                 58 => {
                     c = self.prox_char();
                     if let Some(ch) = c {
-                        if ch == 'r' {
+                        if ch == 'p' {
                             state = 60; // c4
                         } else if !self.is_letter_digit_or_underscore(ch) {
                             self.trata_lookahead();
@@ -1377,6 +1402,22 @@ impl Lexer {
                 91 => {
                     return Token::Keyword {
                         kind: KeywordKind::Float,
+                        line: self.line,
+                        column: self.get_column(),
+                    };
+                }
+                // p2
+                92 => {
+                    return Token::Punctuation {
+                        kind: PunctuationKind::BeginBlock,
+                        line: self.line,
+                        column: self.get_column(),
+                    };
+                }
+                // y2
+                93 => {
+                    return Token::Punctuation {
+                        kind: PunctuationKind::EndBlock,
                         line: self.line,
                         column: self.get_column(),
                     };

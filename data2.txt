@@ -1,5 +1,30 @@
 ()'c'asdasdf***  asd
 
 asdwer-+/
-
-,;
+{% asdasd %}
+,;   {%
+asd
+asd
+%}         ;
+if
+else
+elsif
+main
+void
+float
+int
+then
+tipo
+4562
+456.42
+545.54E+412
+54.5;
+12.2E4
+[asdasd]
+==
+:=
+>
+<
+>=
+<=
+!=
