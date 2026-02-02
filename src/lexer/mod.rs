@@ -1,8 +1,8 @@
-use std::{cell::RefCell, collections::HashMap, rc::Rc};
+use std::{cell::RefCell, collections::HashMap, fs, rc::Rc};
 mod token;
 
 pub use token::{
-    ErrorKind, KeywordKind, NumberKind, OperatorKind, PunctuationKind, RelopKind, Token,
+    ErrorKind, KeywordKind, NumberKind, OperatorKind, PunctuationKind, RelopKind, Token, TokenType,
 };
 
 pub struct Lexer {
@@ -20,9 +20,11 @@ pub struct Lexer {
 }
 
 impl Lexer {
-    pub fn new(file_content: String, symbol_table: Rc<RefCell<HashMap<String, Token>>>) -> Self {
+    pub fn new(file_path: &str, symbol_table: Rc<RefCell<HashMap<String, Token>>>) -> Self {
+        let contents = fs::read_to_string(file_path).expect("Failed to open the file entry.");
+
         Self {
-            file_content: file_content.chars().collect(),
+            file_content: contents.chars().collect(),
             ini: 0,
             prox: 0,
             line: 1,

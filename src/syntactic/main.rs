@@ -1,37 +1,23 @@
-use std::{cell::RefCell, collections::HashMap, fs, io, rc::Rc};
+use std::{cell::RefCell, collections::HashMap, rc::Rc};
 
-use compiler::{Lexer, Token};
+use compiler::{AstNode, ParseTable, Parser};
 
 // Função principal de exemplo
-fn main() -> io::Result<()> {
-    let file_path = "data.txt";
-    let contents = fs::read_to_string(file_path)?;
+fn main() {
     let symbol_table = Rc::new(RefCell::new(HashMap::new()));
+    let parse_table = ParseTable::create_expression_parse_table();
+    let mut parser = Parser::new(parse_table, Rc::clone(&symbol_table));
 
-    let mut lexer = Lexer::new(contents, Rc::clone(&symbol_table));
-
-    println!("Análise Léxica:");
-
-    let mut token;
-    loop {
-        token = lexer.get_next_token();
-        println!("{}", token);
-
-        match token {
-            Token::Eof => {
-                break;
-            }
-            Token::Error {
-                value: _,
-                kind: _,
-                line: _,
-                column: _,
-            } => {
-                break;
-            }
-            _ => {}
+    match parser.parse() {
+        Ok(ast) => {
+            println!("✓ Análise sintática bem-sucedida!");
+            println!("\nÁrvore Sintática Abstrata:");
+            AstNode::print_ast(&ast, 0);
+            println!("\nRepresentação Debug:");
+            println!("{:#?}", ast);
+        }
+        Err(error) => {
+            println!("✗ Erros encontrados: {}", error);
         }
     }
-
-    Ok(())
 }

@@ -242,3 +242,221 @@ impl Display for Token {
         Ok(())
     }
 }
+
+// Tipos de tokens (simplificado)
+#[derive(Debug, Clone, PartialEq, Eq, Hash)]
+pub enum TokenType {
+    Id, // identificador
+    CharValue,
+    Number,
+    GTOperator,
+    LTOperator,
+    LEOperator,
+    NEOperator,
+    EQOperator,
+    GEOperator,
+    PlusOperator,
+    MinusOperator,
+    MultOperator,
+    DivOperator,
+    ExpOperator,
+    LParenOperator,
+    RParenOperator,
+    AssignPunctuation,
+    CommaPunctuation,
+    SemiColonPunctuation,
+    BeginBlockPunctuation,
+    EndBlockPunctuation,
+    IfKeyword,
+    IntKeyword,
+    FloatKeyword,
+    CharKeyword,
+    ThenKeyword,
+    TypeKeyword,
+    ElseKeyword,
+    ElsifKeyword,
+    WhileKeyword,
+    ForKeyword,
+    DoKeyword,
+    MainKeyword,
+    VoidKeyword,
+    Eof,
+    UnclosedCharErr,
+    InvalidTokenAfterExclamationErr,
+    FractionEndedWithADotErr,
+    EndedWithEExpoentErr,
+    EndedAfterExpoentSignErr,
+    MissingEqualErr,
+    UknownTokenErr,
+}
+
+impl From<Token> for TokenType {
+    fn from(token: Token) -> Self {
+        match token {
+            Token::Id { .. } => Self::Id,
+            Token::Char { .. } => Self::CharValue,
+            Token::Number {
+                kind: NumberKind::Integer,
+                ..
+            }
+            | Token::Number {
+                kind: NumberKind::Float,
+                ..
+            } => Self::Number,
+
+            Token::Relop {
+                kind: RelopKind::GT,
+                ..
+            } => Self::GTOperator,
+            Token::Relop {
+                kind: RelopKind::LT,
+                ..
+            } => Self::LTOperator,
+            Token::Relop {
+                kind: RelopKind::LE,
+                ..
+            } => Self::LEOperator,
+            Token::Relop {
+                kind: RelopKind::EQ,
+                ..
+            } => Self::EQOperator,
+            Token::Relop {
+                kind: RelopKind::NE,
+                ..
+            } => Self::NEOperator,
+            Token::Relop {
+                kind: RelopKind::GE,
+                ..
+            } => Self::GEOperator,
+            Token::Operator {
+                kind: OperatorKind::Sum,
+                ..
+            } => Self::PlusOperator,
+            Token::Operator {
+                kind: OperatorKind::Sub,
+                ..
+            } => Self::MinusOperator,
+            Token::Operator {
+                kind: OperatorKind::Mult,
+                ..
+            } => Self::MultOperator,
+            Token::Operator {
+                kind: OperatorKind::Div,
+                ..
+            } => Self::DivOperator,
+            Token::Operator {
+                kind: OperatorKind::Exp,
+                ..
+            } => Self::ExpOperator,
+            Token::Operator {
+                kind: OperatorKind::Paresq,
+                ..
+            } => Self::LParenOperator,
+            Token::Operator {
+                kind: OperatorKind::Pardir,
+                ..
+            } => Self::RParenOperator,
+            Token::Punctuation {
+                kind: PunctuationKind::Assigment,
+                ..
+            } => Self::AssignPunctuation,
+            Token::Punctuation {
+                kind: PunctuationKind::Comma,
+                ..
+            } => Self::CommaPunctuation,
+            Token::Punctuation {
+                kind: PunctuationKind::EndExp,
+                ..
+            } => Self::SemiColonPunctuation,
+            Token::Punctuation {
+                kind: PunctuationKind::BeginBlock,
+                ..
+            } => Self::BeginBlockPunctuation,
+            Token::Punctuation {
+                kind: PunctuationKind::EndBlock,
+                ..
+            } => Self::EndBlockPunctuation,
+            Token::Keyword {
+                kind: KeywordKind::If,
+                ..
+            } => Self::IfKeyword,
+            Token::Keyword {
+                kind: KeywordKind::Int,
+                ..
+            } => Self::IntKeyword,
+            Token::Keyword {
+                kind: KeywordKind::Float,
+                ..
+            } => Self::FloatKeyword,
+            Token::Keyword {
+                kind: KeywordKind::Char,
+                ..
+            } => Self::CharKeyword,
+            Token::Keyword {
+                kind: KeywordKind::Then,
+                ..
+            } => Self::ThenKeyword,
+            Token::Keyword {
+                kind: KeywordKind::Type,
+                ..
+            } => Self::TypeKeyword,
+            Token::Keyword {
+                kind: KeywordKind::Else,
+                ..
+            } => Self::ElseKeyword,
+            Token::Keyword {
+                kind: KeywordKind::Elsif,
+                ..
+            } => Self::ElsifKeyword,
+            Token::Keyword {
+                kind: KeywordKind::While,
+                ..
+            } => Self::WhileKeyword,
+            Token::Keyword {
+                kind: KeywordKind::For,
+                ..
+            } => Self::ForKeyword,
+            Token::Keyword {
+                kind: KeywordKind::Do,
+                ..
+            } => Self::DoKeyword,
+            Token::Keyword {
+                kind: KeywordKind::Main,
+                ..
+            } => Self::MainKeyword,
+            Token::Keyword {
+                kind: KeywordKind::Void,
+                ..
+            } => Self::VoidKeyword,
+            Token::Eof => Self::Eof,
+            Token::Error {
+                kind: ErrorKind::UnclosedChar,
+                ..
+            } => Self::UnclosedCharErr,
+            Token::Error {
+                kind: ErrorKind::InvalidTokenAfterExclamation,
+                ..
+            } => Self::InvalidTokenAfterExclamationErr,
+            Token::Error {
+                kind: ErrorKind::FractionEndedWithADot,
+                ..
+            } => Self::FractionEndedWithADotErr,
+            Token::Error {
+                kind: ErrorKind::EndedWithEExpoent,
+                ..
+            } => Self::EndedWithEExpoentErr,
+            Token::Error {
+                kind: ErrorKind::EndedAfterExpoentSign,
+                ..
+            } => Self::EndedAfterExpoentSignErr,
+            Token::Error {
+                kind: ErrorKind::MissingEqual,
+                ..
+            } => Self::MissingEqualErr,
+            Token::Error {
+                kind: ErrorKind::UnknownToken,
+                ..
+            } => Self::UknownTokenErr,
+        }
+    }
+}
