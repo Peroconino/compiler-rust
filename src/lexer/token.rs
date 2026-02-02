@@ -105,12 +105,6 @@ pub enum Token {
         column: usize,
     },
     Eof,
-    Error {
-        value: Option<String>,
-        kind: ErrorKind,
-        line: usize,
-        column: usize,
-    },
 }
 
 impl Display for Token {
@@ -218,21 +212,6 @@ impl Display for Token {
                     f,
                     "<Keyword, value='{}', kind={}, line={}, column={}>",
                     value, kind, line, column,
-                );
-            }
-            Self::Error {
-                value,
-                kind,
-                line,
-                column,
-            } => {
-                let _ = write!(
-                    f,
-                    "<Error, value='{}', kind={}, line={}, column={}>",
-                    value.clone().unwrap_or("".to_owned()),
-                    kind,
-                    line,
-                    column,
                 );
             }
             Self::Eof {} => {
@@ -429,34 +408,6 @@ impl From<Token> for TokenType {
                 ..
             } => Self::VoidKeyword,
             Token::Eof => Self::Eof,
-            Token::Error {
-                kind: ErrorKind::UnclosedChar,
-                ..
-            } => Self::UnclosedCharErr,
-            Token::Error {
-                kind: ErrorKind::InvalidTokenAfterExclamation,
-                ..
-            } => Self::InvalidTokenAfterExclamationErr,
-            Token::Error {
-                kind: ErrorKind::FractionEndedWithADot,
-                ..
-            } => Self::FractionEndedWithADotErr,
-            Token::Error {
-                kind: ErrorKind::EndedWithEExpoent,
-                ..
-            } => Self::EndedWithEExpoentErr,
-            Token::Error {
-                kind: ErrorKind::EndedAfterExpoentSign,
-                ..
-            } => Self::EndedAfterExpoentSignErr,
-            Token::Error {
-                kind: ErrorKind::MissingEqual,
-                ..
-            } => Self::MissingEqualErr,
-            Token::Error {
-                kind: ErrorKind::UnknownToken,
-                ..
-            } => Self::UknownTokenErr,
         }
     }
 }

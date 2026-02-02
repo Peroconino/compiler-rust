@@ -4,6 +4,7 @@ pub use crate::{
     Lexer, OperatorKind, Token, TokenType,
     syntactic::{parse_table::ParseTable, symbol::Symbol, tree::AstNode},
 };
+
 mod parse_table;
 mod symbol;
 mod tree;
@@ -12,7 +13,6 @@ mod tree;
 pub struct Parser {
     stack: Vec<Symbol>,
     parse_table: ParseTable,
-    symbol_table: Rc<RefCell<HashMap<String, Token>>>,
     lexer: Lexer,
 }
 
@@ -23,7 +23,6 @@ impl Parser {
             lexer: Lexer::new("data.txt", Rc::clone(&symbol_table)),
             stack: Vec::new(),
             parse_table,
-            symbol_table,
         }
     }
 
@@ -38,10 +37,14 @@ impl Parser {
         let mut ast_stack: Vec<AstNode> = Vec::new();
 
         // Obtém primeiro token
-        let mut current_token = self.lexer.get_next_token();
+        let mut current_token = self.lexer.get_next_token()?;
 
         while !self.stack.is_empty() {
-            let x = self.stack.last().unwrap().clone();
+            let x = self
+                .stack
+                .last()
+                .expect("Era esperado uma transição válida")
+                .clone();
 
             match x {
                 Symbol::Terminal(_) | Symbol::End => {
@@ -115,7 +118,7 @@ impl Parser {
                 };
 
                 self.stack.pop();
-                *current_token = self.lexer.get_next_token();
+                *current_token = self.lexer.get_next_token()?;
                 Ok(())
             } else {
                 Err(format!(

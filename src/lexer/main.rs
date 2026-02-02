@@ -17,21 +17,17 @@ fn main() -> io::Result<()> {
     let mut token;
     loop {
         token = lexer.get_next_token();
-        println!("{}", token);
 
         match token {
-            Token::Eof => {
+            Ok(token) => {
+                println!("{}", token);
+                if token == Token::Eof {
+                    break;
+                }
+            }
+            Err(_) => {
                 break;
             }
-            Token::Error {
-                value: _,
-                kind: _,
-                line: _,
-                column: _,
-            } => {
-                break;
-            }
-            _ => {}
         }
     }
 

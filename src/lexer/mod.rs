@@ -166,7 +166,7 @@ impl Lexer {
         }
     }
 
-    pub fn get_next_token(&mut self) -> Token {
+    pub fn get_next_token(&mut self) -> Result<Token, String> {
         let mut c: Option<char>;
         let mut state: u16 = 0;
 
@@ -241,22 +241,22 @@ impl Lexer {
                 }
                 // x2
                 1 => {
-                    return Token::Operator {
+                    return Ok(Token::Operator {
                         kind: OperatorKind::Pardir,
                         line: self.line,
                         column: self.get_column(),
-                    };
+                    });
                 }
                 // w2
                 2 => {
-                    return Token::Operator {
+                    return Ok(Token::Operator {
                         kind: OperatorKind::Paresq,
                         line: self.line,
                         column: self.get_column(),
-                    }; // w2
+                    }); // w2
                 }
                 3 => {
-                    return Token::Eof;
+                    return Ok(Token::Eof);
                 }
                 // v2
                 4 => {
@@ -280,12 +280,13 @@ impl Lexer {
                         state = 6; //v4
                     } else {
                         self.trata_lookahead();
-                        return Token::Error {
-                            value: Some(self.get_value()),
-                            kind: ErrorKind::UnclosedChar,
-                            line: self.line,
-                            column: self.get_column(),
-                        };
+                        return Err(format!(
+                            "Erro léxico: {value}\n Tipo: {kind:?}\n linha: {line}\n coluna: {col}",
+                            value = self.get_value(),
+                            kind = ErrorKind::UnclosedChar,
+                            line = self.line,
+                            col = self.get_column()
+                        ));
                     }
                 }
                 // v4
@@ -306,7 +307,7 @@ impl Lexer {
 
                     //TODO inserir na tabela
                     self.insert_table(token.clone());
-                    return token;
+                    return Ok(token);
                 }
                 // u2
                 7 => {
@@ -331,7 +332,7 @@ impl Lexer {
 
                     self.insert_table(token.clone());
 
-                    return token;
+                    return Ok(token);
                 }
                 // t2
                 9 => {
@@ -347,43 +348,43 @@ impl Lexer {
                 }
                 // t3
                 10 => {
-                    return Token::Operator {
+                    return Ok(Token::Operator {
                         kind: OperatorKind::Exp,
                         line: self.line,
                         column: self.get_column(),
-                    };
+                    });
                 }
                 // s2
                 11 => {
-                    return Token::Operator {
+                    return Ok(Token::Operator {
                         kind: OperatorKind::Mult,
                         line: self.line,
                         column: self.get_column(),
-                    };
+                    });
                 }
                 // s3
                 12 => {
-                    return Token::Operator {
+                    return Ok(Token::Operator {
                         kind: OperatorKind::Div,
                         line: self.line,
                         column: self.get_column(),
-                    };
+                    });
                 }
                 // r3
                 13 => {
-                    return Token::Operator {
+                    return Ok(Token::Operator {
                         kind: OperatorKind::Sub,
                         line: self.line,
                         column: self.get_column(),
-                    };
+                    });
                 }
                 // r2
                 14 => {
-                    return Token::Operator {
+                    return Ok(Token::Operator {
                         kind: OperatorKind::Sum,
                         line: self.line,
                         column: self.get_column(),
-                    };
+                    });
                 }
                 // q10
                 15 => {
@@ -392,29 +393,31 @@ impl Lexer {
                         if ch == '=' {
                             state = 16;
                         } else {
-                            return Token::Error {
-                                value: Some(self.get_value()),
-                                kind: ErrorKind::InvalidTokenAfterExclamation,
-                                line: self.line,
-                                column: self.get_column(),
-                            };
+                            return Err(format!(
+                                "Erro léxico: {value}\n Tipo: {kind:?}\n linha: {line}\n coluna: {col}",
+                                value = self.get_value(),
+                                kind = ErrorKind::InvalidTokenAfterExclamation,
+                                line = self.line,
+                                col = self.get_column()
+                            ));
                         }
                     } else {
-                        return Token::Error {
-                            value: Some(self.get_value()),
-                            kind: ErrorKind::InvalidTokenAfterExclamation,
-                            line: self.line,
-                            column: self.get_column(),
-                        };
+                        return Err(format!(
+                            "Erro léxico: {value}\n Tipo: {kind:?}\n linha: {line}\n coluna: {col}",
+                            value = self.get_value(),
+                            kind = ErrorKind::InvalidTokenAfterExclamation,
+                            line = self.line,
+                            col = self.get_column()
+                        ));
                     }
                 }
                 // q11
                 16 => {
-                    return Token::Relop {
+                    return Ok(Token::Relop {
                         kind: RelopKind::NE,
                         line: self.line,
                         column: self.get_column(),
-                    };
+                    });
                 }
                 // q7
                 17 => {
@@ -430,19 +433,19 @@ impl Lexer {
                 }
                 // q8
                 18 => {
-                    return Token::Relop {
+                    return Ok(Token::Relop {
                         kind: RelopKind::LE,
                         line: self.line,
                         column: self.get_column(),
-                    };
+                    });
                 }
                 // q9
                 19 => {
-                    return Token::Relop {
+                    return Ok(Token::Relop {
                         kind: RelopKind::LT,
                         line: self.line,
                         column: self.get_column(),
-                    };
+                    });
                 }
                 // q4
                 20 => {
@@ -458,19 +461,19 @@ impl Lexer {
                 }
                 // q5
                 21 => {
-                    return Token::Relop {
+                    return Ok(Token::Relop {
                         kind: RelopKind::GE,
                         line: self.line,
                         column: self.get_column(),
-                    };
+                    });
                 }
                 // q6
                 22 => {
-                    return Token::Relop {
+                    return Ok(Token::Relop {
                         kind: RelopKind::GT,
                         line: self.line,
                         column: self.get_column(),
-                    };
+                    });
                 }
                 // q2
                 23 => {
@@ -481,37 +484,38 @@ impl Lexer {
                         state = 24; // q3
                     } else {
                         self.trata_lookahead();
-                        return Token::Error {
-                            value: Some(self.get_value()),
-                            kind: ErrorKind::MissingEqual,
-                            line: self.line,
-                            column: self.get_column(),
-                        };
+                        return Err(format!(
+                            "Erro léxico: {value}\n Tipo: {kind:?}\n linha: {line}\n coluna: {col}",
+                            value = self.get_value(),
+                            kind = ErrorKind::MissingEqual,
+                            line = self.line,
+                            col = self.get_column()
+                        ));
                     }
                 }
                 // q3
                 24 => {
-                    return Token::Relop {
+                    return Ok(Token::Relop {
                         kind: RelopKind::EQ,
                         line: self.line,
                         column: self.get_column(),
-                    };
+                    });
                 }
                 // y3
                 25 => {
-                    return Token::Punctuation {
+                    return Ok(Token::Punctuation {
                         kind: PunctuationKind::Comma,
                         line: self.line,
                         column: self.get_column(),
-                    };
+                    });
                 }
                 // y2
                 26 => {
-                    return Token::Punctuation {
+                    return Ok(Token::Punctuation {
                         kind: PunctuationKind::EndExp,
                         line: self.line,
                         column: self.get_column(),
-                    };
+                    });
                 }
                 // z2
                 27 => {
@@ -522,21 +526,22 @@ impl Lexer {
                         state = 28; // z3
                     } else {
                         self.trata_lookahead();
-                        return Token::Error {
-                            value: Some(self.get_value()),
-                            kind: ErrorKind::MissingEqual,
-                            line: self.line,
-                            column: self.get_column(),
-                        };
+                        return Err(format!(
+                            "Erro léxico: {value}\n Tipo: {kind:?}\n linha: {line}\n coluna: {col}",
+                            value = self.get_value(),
+                            kind = ErrorKind::MissingEqual,
+                            line = self.line,
+                            col = self.get_column()
+                        ));
                     }
                 }
                 // z3
                 28 => {
-                    return Token::Punctuation {
+                    return Ok(Token::Punctuation {
                         kind: PunctuationKind::Assigment,
                         line: self.line,
                         column: self.get_column(),
-                    };
+                    });
                 }
                 // b2
                 29 => {
@@ -569,24 +574,26 @@ impl Lexer {
                             state = 33; // b8
                         } else {
                             self.trata_lookahead();
-                            return Token::Error {
-                                value: Some(self.get_value()),
-                                kind: ErrorKind::FractionEndedWithADot,
-                                line: self.line,
-                                column: self.get_column(),
-                            };
+                            return Err(format!(
+                                "Erro léxico: {value}\n Tipo: {kind:?}\n linha: {line}\n coluna: {col}",
+                                value = self.get_value(),
+                                kind = ErrorKind::FractionEndedWithADot,
+                                line = self.line,
+                                col = self.get_column()
+                            ));
                         }
                     } else if self.has_atleast_one_digit {
                         self.trata_lookahead();
                         state = 33; // b8
                     } else {
                         self.trata_lookahead();
-                        return Token::Error {
-                            value: Some(self.get_value()),
-                            kind: ErrorKind::FractionEndedWithADot,
-                            line: self.line,
-                            column: self.get_column(),
-                        };
+                        return Err(format!(
+                            "Erro léxico: {value}\n Tipo: {kind:?}\n linha: {line}\n coluna: {col}",
+                            value = self.get_value(),
+                            kind = ErrorKind::FractionEndedWithADot,
+                            line = self.line,
+                            col = self.get_column()
+                        ));
                     }
                 }
                 // b3
@@ -600,7 +607,7 @@ impl Lexer {
 
                     self.insert_table(token.clone());
 
-                    return token;
+                    return Ok(token);
                 }
                 // b5
                 32 => {
@@ -612,21 +619,23 @@ impl Lexer {
                             state = 35; // b7
                         } else {
                             self.trata_lookahead();
-                            return Token::Error {
-                                value: Some(self.get_value()),
-                                kind: ErrorKind::EndedWithEExpoent,
-                                line: self.line,
-                                column: self.get_column(),
-                            };
+                            return Err(format!(
+                                "Erro léxico: {value}\n Tipo: {kind:?}\n linha: {line}\n coluna: {col}",
+                                value = self.get_value(),
+                                kind = ErrorKind::EndedWithEExpoent,
+                                line = self.line,
+                                col = self.get_column()
+                            ));
                         }
                     } else {
                         self.trata_lookahead();
-                        return Token::Error {
-                            value: Some(self.get_value()),
-                            kind: ErrorKind::EndedWithEExpoent,
-                            line: self.line,
-                            column: self.get_column(),
-                        };
+                        return Err(format!(
+                            "Erro léxico: {value}\n Tipo: {kind:?}\n linha: {line}\n coluna: {col}",
+                            value = self.get_value(),
+                            kind = ErrorKind::EndedWithEExpoent,
+                            line = self.line,
+                            col = self.get_column()
+                        ));
                     }
                 }
                 // b8
@@ -640,7 +649,7 @@ impl Lexer {
 
                     self.insert_table(token.clone());
 
-                    return token;
+                    return Ok(token);
                 }
                 // b6
                 34 => {
@@ -651,12 +660,13 @@ impl Lexer {
                         state = 35; // b7 
                     } else {
                         self.trata_lookahead();
-                        return Token::Error {
-                            value: Some(self.get_value()),
-                            kind: ErrorKind::EndedAfterExpoentSign,
-                            line: self.line,
-                            column: self.get_column(),
-                        };
+                        return Err(format!(
+                            "Erro léxico: {value}\n Tipo: {kind:?}\n linha: {line}\n coluna: {col}",
+                            value = self.get_value(),
+                            kind = ErrorKind::EndedAfterExpoentSign,
+                            line = self.line,
+                            col = self.get_column()
+                        ));
                     }
                 }
                 // b7
@@ -735,11 +745,11 @@ impl Lexer {
                 }
                 // d6
                 40 => {
-                    return Token::Keyword {
+                    return Ok(Token::Keyword {
                         kind: KeywordKind::Main,
                         line: self.line,
                         column: self.get_column(),
-                    };
+                    });
                 }
                 // e2
                 41 => {
@@ -806,11 +816,11 @@ impl Lexer {
                 }
                 // e6
                 45 => {
-                    return Token::Keyword {
+                    return Ok(Token::Keyword {
                         kind: KeywordKind::Void,
                         line: self.line,
                         column: self.get_column(),
-                    };
+                    });
                 }
                 // f2
                 46 => {
@@ -862,11 +872,11 @@ impl Lexer {
                 }
                 // i2
                 49 => {
-                    return Token::Keyword {
+                    return Ok(Token::Keyword {
                         kind: KeywordKind::If,
                         line: self.line,
                         column: self.get_column(),
-                    };
+                    });
                 }
                 // f4
                 50 => {
@@ -882,11 +892,11 @@ impl Lexer {
                 }
                 // f5
                 51 => {
-                    return Token::Keyword {
+                    return Ok(Token::Keyword {
                         kind: KeywordKind::Int,
                         line: self.line,
                         column: self.get_column(),
-                    };
+                    });
                 }
                 // g2
                 52 => {
@@ -953,11 +963,11 @@ impl Lexer {
                 }
                 // g6
                 56 => {
-                    return Token::Keyword {
+                    return Ok(Token::Keyword {
                         kind: KeywordKind::Char,
                         line: self.line,
                         column: self.get_column(),
-                    };
+                    });
                 }
                 // j2
                 57 => {
@@ -1072,19 +1082,19 @@ impl Lexer {
                 }
                 // c6
                 64 => {
-                    return Token::Keyword {
+                    return Ok(Token::Keyword {
                         kind: KeywordKind::Type,
                         line: self.line,
                         column: self.get_column(),
-                    };
+                    });
                 }
                 // j6
                 65 => {
-                    return Token::Keyword {
+                    return Ok(Token::Keyword {
                         kind: KeywordKind::Then,
                         line: self.line,
                         column: self.get_column(),
-                    };
+                    });
                 }
                 // k2
                 66 => {
@@ -1170,11 +1180,11 @@ impl Lexer {
                 }
                 // l2
                 71 => {
-                    return Token::Keyword {
+                    return Ok(Token::Keyword {
                         kind: KeywordKind::Else,
                         line: self.line,
                         column: self.get_column(),
-                    };
+                    });
                 }
                 // k6
                 72 => {
@@ -1190,11 +1200,11 @@ impl Lexer {
                 }
                 // k7
                 73 => {
-                    return Token::Keyword {
+                    return Ok(Token::Keyword {
                         kind: KeywordKind::Elsif,
                         line: self.line,
                         column: self.get_column(),
-                    };
+                    });
                 }
                 // m2
                 74 => {
@@ -1278,11 +1288,11 @@ impl Lexer {
                 }
                 // m7
                 79 => {
-                    return Token::Keyword {
+                    return Ok(Token::Keyword {
                         kind: KeywordKind::While,
                         line: self.line,
                         column: self.get_column(),
-                    };
+                    });
                 }
                 // n2
                 80 => {
@@ -1315,11 +1325,11 @@ impl Lexer {
                 }
                 // n4
                 82 => {
-                    return Token::Keyword {
+                    return Ok(Token::Keyword {
                         kind: KeywordKind::Do,
                         line: self.line,
                         column: self.get_column(),
-                    };
+                    });
                 }
                 // o2
                 83 => {
@@ -1422,11 +1432,11 @@ impl Lexer {
                 }
                 // o5
                 89 => {
-                    return Token::Keyword {
+                    return Ok(Token::Keyword {
                         kind: KeywordKind::For,
                         line: self.line,
                         column: self.get_column(),
-                    };
+                    });
                 }
                 // h6
                 90 => {
@@ -1442,27 +1452,27 @@ impl Lexer {
                 }
                 // h7
                 91 => {
-                    return Token::Keyword {
+                    return Ok(Token::Keyword {
                         kind: KeywordKind::Float,
                         line: self.line,
                         column: self.get_column(),
-                    };
+                    });
                 }
                 // p2
                 92 => {
-                    return Token::Punctuation {
+                    return Ok(Token::Punctuation {
                         kind: PunctuationKind::BeginBlock,
                         line: self.line,
                         column: self.get_column(),
-                    };
+                    });
                 }
                 // y2
                 93 => {
-                    return Token::Punctuation {
+                    return Ok(Token::Punctuation {
                         kind: PunctuationKind::EndBlock,
                         line: self.line,
                         column: self.get_column(),
-                    };
+                    });
                 }
                 _ => {
                     break;
@@ -1470,11 +1480,12 @@ impl Lexer {
             };
         }
 
-        Token::Error {
-            value: None,
-            kind: ErrorKind::UnknownToken,
-            line: 0,
-            column: 0,
-        }
+        Err(format!(
+            "Erro léxico: {value}\n Tipo: {kind:?}\n linha: {line}\n coluna: {col}",
+            value = self.get_value(),
+            kind = ErrorKind::UnknownToken,
+            line = self.line,
+            col = self.get_column()
+        ))
     }
 }
