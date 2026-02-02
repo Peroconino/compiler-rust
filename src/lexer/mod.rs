@@ -1,11 +1,11 @@
-use std::{cell::RefCell, collections::HashMap, fs, rc::Rc};
+use std::{collections::HashMap, fs};
 mod token;
 
 pub use token::{
     ErrorKind, KeywordKind, NumberKind, OperatorKind, PunctuationKind, RelopKind, Token, TokenType,
 };
 
-pub struct Lexer {
+pub struct Lexer<'a> {
     pub file_content: Vec<char>,
     pub ini: usize,
     pub prox: usize,
@@ -16,11 +16,11 @@ pub struct Lexer {
     lookahead: Option<char>,
     prev_column: usize,
     prev_line: usize,
-    symbol_table: Rc<RefCell<HashMap<String, Token>>>,
+    symbol_table: &'a mut HashMap<String, Token>,
 }
 
-impl Lexer {
-    pub fn new(file_path: &str, symbol_table: Rc<RefCell<HashMap<String, Token>>>) -> Self {
+impl<'a> Lexer<'a> {
+    pub fn new(file_path: &str, symbol_table: &'a mut HashMap<String, Token>) -> Self {
         let contents = fs::read_to_string(file_path).expect("Failed to open the file entry.");
 
         Self {
@@ -145,20 +145,15 @@ impl Lexer {
     }
 
     fn insert_table(&mut self, token: Token) {
-        let mut table = self
-            .symbol_table
-            .try_borrow_mut()
-            .expect("Failed to borrow symbol table.");
-
         match token.clone() {
             Token::Id { value, .. } => {
-                table.entry(value).or_insert(token);
+                self.symbol_table.entry(value).or_insert(token);
             }
             Token::Char { value, .. } => {
-                table.entry(value.to_string()).or_insert(token);
+                self.symbol_table.entry(value.to_string()).or_insert(token);
             }
             Token::Number { value, .. } => {
-                table.entry(value).or_insert(token);
+                self.symbol_table.entry(value).or_insert(token);
             }
             _ => {
                 panic!("Token is not insertable.");

@@ -1,4 +1,4 @@
-use std::{cell::RefCell, collections::HashMap, rc::Rc};
+use std::collections::HashMap;
 
 pub use crate::{
     Lexer, OperatorKind, Token, TokenType,
@@ -10,17 +10,17 @@ mod symbol;
 mod tree;
 
 // Estrutura do Analisador sintático
-pub struct Parser {
+pub struct Parser<'a> {
     stack: Vec<Symbol>,
     parse_table: ParseTable,
-    lexer: Lexer,
+    lexer: Lexer<'a>,
 }
 
 // Funções para o analisador sintático
-impl Parser {
-    pub fn new(parse_table: ParseTable, symbol_table: Rc<RefCell<HashMap<String, Token>>>) -> Self {
+impl<'a> Parser<'a> {
+    pub fn new(parse_table: ParseTable, symbol_table: &'a mut HashMap<String, Token>) -> Self {
         Parser {
-            lexer: Lexer::new("data.txt", Rc::clone(&symbol_table)),
+            lexer: Lexer::new("data.txt", symbol_table),
             stack: Vec::new(),
             parse_table,
         }
