@@ -1,14 +1,12 @@
 use std::fmt::{Display, Error, Formatter};
 
-use strum_macros::Display;
-
-#[derive(Debug, Display, Clone, PartialEq, Eq, Hash)]
+#[derive(Debug, Clone, PartialEq, Eq, Hash)]
 pub enum NumberKind {
     Integer,
     Float,
 }
 
-#[derive(Debug, Display, Clone, PartialEq, Eq, Hash)]
+#[derive(Debug, Clone, PartialEq, Eq, Hash)]
 pub enum RelopKind {
     GT,
     LT,
@@ -18,7 +16,7 @@ pub enum RelopKind {
     GE,
 }
 
-#[derive(Debug, Display, Clone, PartialEq, Eq, Hash)]
+#[derive(Debug, Clone, PartialEq, Eq, Hash)]
 pub enum OperatorKind {
     Sum,
     Sub,
@@ -29,7 +27,7 @@ pub enum OperatorKind {
     Pardir,
 }
 
-#[derive(Debug, Display, Clone, PartialEq, Eq, Hash)]
+#[derive(Debug, Clone, PartialEq, Eq, Hash)]
 pub enum PunctuationKind {
     Assigment,
     Comma,
@@ -38,7 +36,7 @@ pub enum PunctuationKind {
     EndBlock,
 }
 
-#[derive(Debug, Display, Clone, PartialEq, Eq, Hash)]
+#[derive(Debug, Clone, PartialEq, Eq, Hash)]
 pub enum KeywordKind {
     If,
     Int,
@@ -55,7 +53,7 @@ pub enum KeywordKind {
     Void,
 }
 
-#[derive(Debug, Display, Clone, PartialEq, Eq, Hash)]
+#[derive(Debug, Clone, PartialEq, Eq, Hash)]
 pub enum ErrorKind {
     UnclosedChar,
     InvalidTokenAfterExclamation,
@@ -124,7 +122,7 @@ impl Display for Token {
             } => {
                 let _ = write!(
                     f,
-                    "<Number, value='{}', kind={}, line={}, column={}>",
+                    "<Number, value='{}', kind={:?}, line={}, column={}>",
                     value, kind, line, column,
                 );
             }
@@ -140,7 +138,7 @@ impl Display for Token {
 
                 let _ = write!(
                     f,
-                    "<Relop, value='{}', kind={}, line={}, column={}>",
+                    "<Relop, value='{}', kind={:?}, line={}, column={}>",
                     value, kind, line, column,
                 );
             }
@@ -157,7 +155,7 @@ impl Display for Token {
 
                 let _ = write!(
                     f,
-                    "<Operator, value='{}', kind={}, line={}, column={}>",
+                    "<Operator, value='{}', kind={:?}, line={}, column={}>",
                     value, kind, line, column,
                 );
             }
@@ -172,7 +170,7 @@ impl Display for Token {
 
                 let _ = write!(
                     f,
-                    "<Punctuation, value='{}', kind={}, line={}, column={}>",
+                    "<Punctuation, value='{}', kind={:?}, line={}, column={}>",
                     value, kind, line, column,
                 );
             }
@@ -194,7 +192,7 @@ impl Display for Token {
                 };
                 let _ = write!(
                     f,
-                    "<Keyword, value='{}', kind={}, line={}, column={}>",
+                    "<Keyword, value='{}', kind={:?}, line={}, column={}>",
                     value, kind, line, column,
                 );
             }
@@ -206,11 +204,9 @@ impl Display for Token {
     }
 }
 
-// Tipos de tokens (simplificado)
 #[derive(Debug, Clone, PartialEq, Eq, Hash)]
 pub enum TokenType {
-    Id, // identificador
-    CharValue,
+    Id,
     Number,
     GTOperator,
     LTOperator,
