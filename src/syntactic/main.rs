@@ -5,7 +5,7 @@ use compiler::{AstNode, ParseTable, Parser};
 // Função principal de exemplo
 fn main() {
     let mut symbol_table = HashMap::new();
-    let parse_table = ParseTable::create_expression_parse_table();
+    let parse_table = ParseTable::create_parse_table();
     let mut parser = Parser::new(parse_table, &mut symbol_table);
 
     match parser.parse() {
@@ -15,7 +15,7 @@ fn main() {
             AstNode::print_ast(&ast, 0);
         }
         Err(error) => {
-            println!("✗ Erro encontrado: {}", error);
+            println!("✗ {}", error);
         }
     };
 }

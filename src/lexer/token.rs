@@ -73,11 +73,6 @@ pub enum Token {
         line: usize,
         column: usize,
     },
-    Char {
-        value: char,
-        line: usize,
-        column: usize,
-    },
     Number {
         value: String,
         kind: NumberKind,
@@ -119,17 +114,6 @@ impl Display for Token {
                     f,
                     "<Id, value='{}', line={}, column={}>",
                     value, line, column,
-                );
-            }
-            Self::Char {
-                value,
-                line,
-                column,
-            } => {
-                let _ = write!(
-                    f,
-                    "<Char, value='{}', line={}, column={}>",
-                    value, line, column
                 );
             }
             Self::Number {
@@ -273,7 +257,6 @@ impl From<Token> for TokenType {
     fn from(token: Token) -> Self {
         match token {
             Token::Id { .. } => Self::Id,
-            Token::Char { .. } => Self::CharValue,
             Token::Number {
                 kind: NumberKind::Integer,
                 ..

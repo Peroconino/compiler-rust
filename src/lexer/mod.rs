@@ -146,13 +146,7 @@ impl<'a> Lexer<'a> {
 
     fn insert_table(&mut self, token: Token) {
         match token.clone() {
-            Token::Id { value, .. } => {
-                self.symbol_table.entry(value).or_insert(token);
-            }
-            Token::Char { value, .. } => {
-                self.symbol_table.entry(value.to_string()).or_insert(token);
-            }
-            Token::Number { value, .. } => {
+            Token::Id { value, .. } | Token::Number { value, .. } => {
                 self.symbol_table.entry(value).or_insert(token);
             }
             _ => {
@@ -286,21 +280,13 @@ impl<'a> Lexer<'a> {
                 }
                 // v4
                 6 => {
-                    let token = Token::Char {
-                        value: self
-                            .get_value()
-                            .strip_prefix("'")
-                            .unwrap()
-                            .strip_suffix("'")
-                            .unwrap()
-                            .chars()
-                            .last()
-                            .unwrap(),
+                    let token = Token::Id {
+                        value: self.get_value(),
                         line: self.line,
                         column: self.get_column(),
                     };
 
-                    //TODO inserir na tabela
+                    //TODO inserir na tabela com os tipos corretos
                     self.insert_table(token.clone());
                     return Ok(token);
                 }

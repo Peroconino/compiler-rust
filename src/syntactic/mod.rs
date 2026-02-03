@@ -122,7 +122,7 @@ impl<'a> Parser<'a> {
                 Ok(())
             } else {
                 Err(format!(
-                    "Esperado {:?}, encontrado {}",
+                    "Erro de sintaxe. Esperado {:?}, encontrado {}",
                     terminal_type, current_token
                 ))
             }
@@ -151,10 +151,7 @@ impl<'a> Parser<'a> {
 
             Ok(())
         } else {
-            Err(format!(
-                "Erro de sintaxe. Não esperado {:?} em {}",
-                non_terminal, current_token
-            ))
+            Err(format!("Erro de sintaxe. Não esperado {}", current_token))
         }
     }
 }
