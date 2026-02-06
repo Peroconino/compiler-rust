@@ -1,15 +1,35 @@
 use crate::{OperatorKind, TokenType};
 
 // Símbolos da gramática
-#[derive(Debug, Clone, PartialEq, Eq, Hash)]
+#[derive(Debug, Clone)]
 pub enum Symbol {
     Terminal(TokenType),
     NonTerminal(String),
     Epsilon, // ε
     End,     // $
-    Action(OperatorKind),
+    Action(ActionKind),
 }
 
+#[derive(Clone, Debug)]
+pub enum ActionKind {
+    Math(OperatorKind),
+
+    // Comandos
+    Assign,
+    CreateBlock,
+    CreateIf,
+    CreateIfElse,
+    CreateWhile,
+    CreateDoWhile,
+    CreateFor,
+
+    MakeList,
+    AppendList,
+    CreateDecl,
+    CreateCond,
+
+    CreateProgram,
+}
 // Funções para os simbolos
 impl Symbol {
     pub fn is_terminal(&self) -> bool {

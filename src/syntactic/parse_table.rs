@@ -1,6 +1,6 @@
 use std::{collections::HashMap, vec};
 
-use crate::{OperatorKind, TokenType, syntactic::symbol::Symbol};
+use crate::{ActionKind, OperatorKind, TokenType, syntactic::symbol::Symbol};
 
 // Tabela de análise LL(1)
 pub struct ParseTable {
@@ -27,8 +27,9 @@ impl ParseTable {
             .get(&(non_terminal.to_string(), terminal.clone()))
     }
 
-    pub fn create_parse_table() -> ParseTable {
-        let mut table = ParseTable::create_expression_parse_table();
+    pub fn create_parse_table(start_symbol: &str) -> ParseTable {
+        let mut table = ParseTable::new(start_symbol);
+        table = ParseTable::create_expression_parse_table(table);
         table = ParseTable::create_programa_table(table);
         table = ParseTable::create_tipo_table(table);
         table = ParseTable::create_bloco_table(table);
@@ -59,26 +60,55 @@ impl ParseTable {
         let lparen = || Symbol::Terminal(TokenType::LParenOperator);
         let rparen = || Symbol::Terminal(TokenType::RParenOperator);
         let bloco = || Symbol::NonTerminal("bloco".to_string());
+        let create_program_action = || Symbol::Action(ActionKind::CreateProgram);
 
         table.set_entry(
             "inicio",
             TokenType::CharKeyword,
-            vec![tipo(), main(), lparen(), rparen(), bloco()],
+            vec![
+                tipo(),
+                main(),
+                lparen(),
+                rparen(),
+                bloco(),
+                create_program_action(),
+            ],
         );
         table.set_entry(
             "inicio",
             TokenType::IntKeyword,
-            vec![tipo(), main(), lparen(), rparen(), bloco()],
+            vec![
+                tipo(),
+                main(),
+                lparen(),
+                rparen(),
+                bloco(),
+                create_program_action(),
+            ],
         );
         table.set_entry(
             "inicio",
             TokenType::FloatKeyword,
-            vec![tipo(), main(), lparen(), rparen(), bloco()],
+            vec![
+                tipo(),
+                main(),
+                lparen(),
+                rparen(),
+                bloco(),
+                create_program_action(),
+            ],
         );
         table.set_entry(
             "inicio",
             TokenType::VoidKeyword,
-            vec![tipo(), main(), lparen(), rparen(), bloco()],
+            vec![
+                tipo(),
+                main(),
+                lparen(),
+                rparen(),
+                bloco(),
+                create_program_action(),
+            ],
         );
 
         table
@@ -106,15 +136,16 @@ impl ParseTable {
      <bloco> -> [ <decls> <comandos> ]
     */
     fn create_bloco_table(mut table: ParseTable) -> ParseTable {
-        let lbracket = || Symbol::Terminal(TokenType::BeginBlockPunctuation);
-        let decls = || Symbol::NonTerminal("decls".to_string());
-        let comandos = || Symbol::NonTerminal("comandos".to_string());
-        let rbracket = || Symbol::Terminal(TokenType::EndBlockPunctuation);
+        let lbracket = Symbol::Terminal(TokenType::BeginBlockPunctuation);
+        let decls = Symbol::NonTerminal("decls".to_string());
+        let comandos = Symbol::NonTerminal("comandos".to_string());
+        let rbracket = Symbol::Terminal(TokenType::EndBlockPunctuation);
+        let create_block = Symbol::Action(ActionKind::CreateBlock);
 
         table.set_entry(
             "bloco",
             TokenType::BeginBlockPunctuation,
-            vec![lbracket(), decls(), comandos(), rbracket()],
+            vec![lbracket, decls, comandos, rbracket, create_block],
         );
 
         table
@@ -127,20 +158,58 @@ impl ParseTable {
         let decl = || Symbol::NonTerminal("decl".to_string());
         let decls = || Symbol::NonTerminal("decls".to_string());
         let epsilon = || Symbol::Epsilon;
+        let action_make_list = || Symbol::Action(ActionKind::MakeList);
+        let action_append_list = || Symbol::Action(ActionKind::AppendList);
 
         // <decls> -> <decl> <decls>
-        table.set_entry("decls", TokenType::CharKeyword, vec![decl(), decls()]);
-        table.set_entry("decls", TokenType::IntKeyword, vec![decl(), decls()]);
-        table.set_entry("decls", TokenType::FloatKeyword, vec![decl(), decls()]);
-        table.set_entry("decls", TokenType::VoidKeyword, vec![decl(), decls()]);
+        table.set_entry(
+            "decls",
+            TokenType::CharKeyword,
+            vec![decl(), decls(), action_append_list()],
+        );
+        table.set_entry(
+            "decls",
+            TokenType::IntKeyword,
+            vec![decl(), decls(), action_append_list()],
+        );
+        table.set_entry(
+            "decls",
+            TokenType::FloatKeyword,
+            vec![decl(), decls(), action_append_list()],
+        );
+        table.set_entry(
+            "decls",
+            TokenType::VoidKeyword,
+            vec![decl(), decls(), action_append_list()],
+        );
 
         // <delcs> -> ε
-        table.set_entry("decls", TokenType::Id, vec![epsilon()]);
-        table.set_entry("decls", TokenType::IfKeyword, vec![epsilon()]);
-        table.set_entry("decls", TokenType::WhileKeyword, vec![epsilon()]);
-        table.set_entry("decls", TokenType::DoKeyword, vec![epsilon()]);
-        table.set_entry("decls", TokenType::ForKeyword, vec![epsilon()]);
-        table.set_entry("decls", TokenType::EndBlockPunctuation, vec![epsilon()]);
+        table.set_entry("decls", TokenType::Id, vec![epsilon(), action_make_list()]);
+        table.set_entry(
+            "decls",
+            TokenType::IfKeyword,
+            vec![epsilon(), action_make_list()],
+        );
+        table.set_entry(
+            "decls",
+            TokenType::WhileKeyword,
+            vec![epsilon(), action_make_list()],
+        );
+        table.set_entry(
+            "decls",
+            TokenType::DoKeyword,
+            vec![epsilon(), action_make_list()],
+        );
+        table.set_entry(
+            "decls",
+            TokenType::ForKeyword,
+            vec![epsilon(), action_make_list()],
+        );
+        table.set_entry(
+            "decls",
+            TokenType::EndBlockPunctuation,
+            vec![epsilon(), action_make_list()],
+        );
 
         table
     }
@@ -152,26 +221,27 @@ impl ParseTable {
         let tipo = || Symbol::NonTerminal("tipo".to_string());
         let lista_ids = || Symbol::NonTerminal("lista_ids".to_string());
         let end_exp = || Symbol::Terminal(TokenType::SemiColonPunctuation);
+        let action_create_decl = || Symbol::Action(ActionKind::CreateDecl);
 
         table.set_entry(
             "decl",
             TokenType::CharKeyword,
-            vec![tipo(), lista_ids(), end_exp()],
+            vec![tipo(), lista_ids(), end_exp(), action_create_decl()],
         );
         table.set_entry(
             "decl",
             TokenType::IntKeyword,
-            vec![tipo(), lista_ids(), end_exp()],
+            vec![tipo(), lista_ids(), end_exp(), action_create_decl()],
         );
         table.set_entry(
             "decl",
             TokenType::FloatKeyword,
-            vec![tipo(), lista_ids(), end_exp()],
+            vec![tipo(), lista_ids(), end_exp(), action_create_decl()],
         );
         table.set_entry(
             "decl",
             TokenType::VoidKeyword,
-            vec![tipo(), lista_ids(), end_exp()],
+            vec![tipo(), lista_ids(), end_exp(), action_create_decl()],
         );
 
         table
@@ -181,10 +251,15 @@ impl ParseTable {
      <lista_ids> -> id <lista_ids'>
     */
     fn create_lista_ids_table(mut table: ParseTable) -> ParseTable {
-        let id = || Symbol::Terminal(TokenType::Id);
-        let lista_ids_prime = || Symbol::NonTerminal("lista_ids'".to_string());
+        let id = Symbol::Terminal(TokenType::Id);
+        let lista_ids_prime = Symbol::NonTerminal("lista_ids'".to_string());
+        let action_append_list = Symbol::Action(ActionKind::AppendList);
 
-        table.set_entry("lista_ids", TokenType::Id, vec![id(), lista_ids_prime()]);
+        table.set_entry(
+            "lista_ids",
+            TokenType::Id,
+            vec![id, lista_ids_prime, action_append_list],
+        );
 
         table
     }
@@ -193,21 +268,23 @@ impl ParseTable {
      <lista_ids'> -> , id <lista_ids'> | ε
     */
     fn create_lista_ids_prime_table(mut table: ParseTable) -> ParseTable {
-        let comma = || Symbol::Terminal(TokenType::CommaPunctuation);
-        let id = || Symbol::Terminal(TokenType::Id);
-        let lista_ids_prime = || Symbol::NonTerminal("lista_ids'".to_string());
-        let epsilon = || Symbol::Epsilon;
+        let comma = Symbol::Terminal(TokenType::CommaPunctuation);
+        let id = Symbol::Terminal(TokenType::Id);
+        let lista_ids_prime = Symbol::NonTerminal("lista_ids'".to_string());
+        let epsilon = Symbol::Epsilon;
+        let action_append_list = Symbol::Action(ActionKind::AppendList);
+        let action_make_list = Symbol::Action(ActionKind::MakeList);
 
         table.set_entry(
             "lista_ids'",
             TokenType::CommaPunctuation,
-            vec![comma(), id(), lista_ids_prime()],
+            vec![comma, id, lista_ids_prime, action_append_list],
         );
 
         table.set_entry(
             "lista_ids'",
             TokenType::SemiColonPunctuation,
-            vec![epsilon()],
+            vec![epsilon, action_make_list],
         );
 
         table
@@ -220,35 +297,45 @@ impl ParseTable {
         let comando = || Symbol::NonTerminal("comando".to_string());
         let comandos = || Symbol::NonTerminal("comandos".to_string());
         let epsilon = || Symbol::Epsilon;
+        let action_make_list = || Symbol::Action(ActionKind::MakeList);
+        let action_append_list = || Symbol::Action(ActionKind::AppendList);
 
-        table.set_entry("comandos", TokenType::Id, vec![comando(), comandos()]);
+        table.set_entry(
+            "comandos",
+            TokenType::Id,
+            vec![comando(), comandos(), action_append_list()],
+        );
         table.set_entry(
             "comandos",
             TokenType::IfKeyword,
-            vec![comando(), comandos()],
+            vec![comando(), comandos(), action_append_list()],
         );
         table.set_entry(
             "comandos",
             TokenType::WhileKeyword,
-            vec![comando(), comandos()],
+            vec![comando(), comandos(), action_append_list()],
         );
         table.set_entry(
             "comandos",
             TokenType::DoKeyword,
-            vec![comando(), comandos()],
+            vec![comando(), comandos(), action_append_list()],
         );
         table.set_entry(
             "comandos",
             TokenType::ForKeyword,
-            vec![comando(), comandos()],
+            vec![comando(), comandos(), action_append_list()],
         );
         table.set_entry(
             "comandos",
             TokenType::BeginBlockPunctuation,
-            vec![comando(), comandos()],
+            vec![comando(), comandos(), action_append_list()],
         );
 
-        table.set_entry("comandos", TokenType::EndBlockPunctuation, vec![epsilon()]);
+        table.set_entry(
+            "comandos",
+            TokenType::EndBlockPunctuation,
+            vec![epsilon(), action_make_list()],
+        );
 
         table
     }
@@ -283,15 +370,16 @@ impl ParseTable {
      <cmd_atrib> -> id := <E> ;
     */
     fn create_cmd_atrib_table(mut table: ParseTable) -> ParseTable {
-        let id = || Symbol::Terminal(TokenType::Id);
-        let atrib = || Symbol::Terminal(TokenType::AssignPunctuation);
-        let expr = || Symbol::NonTerminal("E".to_string());
-        let end_expr = || Symbol::Terminal(TokenType::SemiColonPunctuation);
+        let id = Symbol::Terminal(TokenType::Id);
+        let atrib = Symbol::Terminal(TokenType::AssignPunctuation);
+        let expr = Symbol::NonTerminal("E".to_string());
+        let end_expr = Symbol::Terminal(TokenType::SemiColonPunctuation);
+        let action_assign = Symbol::Action(ActionKind::Assign);
 
         table.set_entry(
             "cmd_atrib",
             TokenType::Id,
-            vec![id(), atrib(), expr(), end_expr()],
+            vec![id, atrib, expr, end_expr, action_assign],
         );
 
         table
@@ -306,9 +394,7 @@ impl ParseTable {
      F' → ** U F' | ε
      U  → id | num | ( E )
     */
-    fn create_expression_parse_table() -> ParseTable {
-        let mut table = ParseTable::new("inicio");
-
+    fn create_expression_parse_table(mut table: ParseTable) -> ParseTable {
         // Define os símbolos
         let e = || Symbol::NonTerminal("E".to_string());
         let e_prime = || Symbol::NonTerminal("E'".to_string());
@@ -330,11 +416,11 @@ impl ParseTable {
         let epsilon = || Symbol::Epsilon;
 
         // Adicione definições de Ação:
-        let action_add = || Symbol::Action(OperatorKind::Sum);
-        let action_sub = || Symbol::Action(OperatorKind::Sub);
-        let action_mult = || Symbol::Action(OperatorKind::Mult);
-        let action_div = || Symbol::Action(OperatorKind::Div);
-        let action_exp = || Symbol::Action(OperatorKind::Exp);
+        let action_add = || Symbol::Action(ActionKind::Math(OperatorKind::Sum));
+        let action_sub = || Symbol::Action(ActionKind::Math(OperatorKind::Sub));
+        let action_mult = || Symbol::Action(ActionKind::Math(OperatorKind::Mult));
+        let action_div = || Symbol::Action(ActionKind::Math(OperatorKind::Div));
+        let action_exp = || Symbol::Action(ActionKind::Math(OperatorKind::Exp));
 
         // Produção 1: E → T E'
         table.set_entry("E", TokenType::Id, vec![t(), e_prime()]);
@@ -364,6 +450,7 @@ impl ParseTable {
         table.set_entry("E'", TokenType::LEOperator, vec![epsilon()]);
         table.set_entry("E'", TokenType::NEOperator, vec![epsilon()]);
         table.set_entry("E'", TokenType::EQOperator, vec![epsilon()]);
+        table.set_entry("E'", TokenType::Eof, vec![epsilon()]);
 
         // Produção 5: T → F T'
         table.set_entry("T", TokenType::Id, vec![f(), t_prime()]);
@@ -395,6 +482,7 @@ impl ParseTable {
         table.set_entry("T'", TokenType::LEOperator, vec![epsilon()]);
         table.set_entry("T'", TokenType::NEOperator, vec![epsilon()]);
         table.set_entry("T'", TokenType::EQOperator, vec![epsilon()]);
+        table.set_entry("T'", TokenType::Eof, vec![epsilon()]);
 
         // Produção 9: F → U F'
         table.set_entry("F", TokenType::Id, vec![u(), f_prime()]);
@@ -421,6 +509,7 @@ impl ParseTable {
         table.set_entry("F'", TokenType::LEOperator, vec![epsilon()]);
         table.set_entry("F'", TokenType::NEOperator, vec![epsilon()]);
         table.set_entry("F'", TokenType::EQOperator, vec![epsilon()]);
+        table.set_entry("F'", TokenType::Eof, vec![epsilon()]);
 
         // Produção 9: U → id
         table.set_entry("U", TokenType::Id, vec![id()]);
@@ -473,13 +562,22 @@ impl ParseTable {
     fn create_cond_table(mut table: ParseTable) -> ParseTable {
         let expr = || Symbol::NonTerminal("E".to_string());
         let op_rel = || Symbol::NonTerminal("op_rel".to_string());
+        let action_create_cond = || Symbol::Action(ActionKind::CreateCond);
 
-        table.set_entry("cond", TokenType::Id, vec![expr(), op_rel(), expr()]);
-        table.set_entry("cond", TokenType::Number, vec![expr(), op_rel(), expr()]);
+        table.set_entry(
+            "cond",
+            TokenType::Id,
+            vec![expr(), op_rel(), expr(), action_create_cond()],
+        );
+        table.set_entry(
+            "cond",
+            TokenType::Number,
+            vec![expr(), op_rel(), expr(), action_create_cond()],
+        );
         table.set_entry(
             "cond",
             TokenType::LParenOperator,
-            vec![expr(), op_rel(), expr()],
+            vec![expr(), op_rel(), expr(), action_create_cond()],
         );
 
         table
@@ -548,6 +646,8 @@ impl ParseTable {
         let cmd_if_prime = Symbol::NonTerminal("cmd_if'".to_string());
         let senao = Symbol::Terminal(TokenType::ElseKeyword);
         let epsilon = || Symbol::Epsilon;
+        let action_create_if = || Symbol::Action(ActionKind::CreateIf);
+        let action_create_if_else = || Symbol::Action(ActionKind::CreateIfElse);
 
         table.set_entry(
             "cmd_if'",
@@ -560,21 +660,51 @@ impl ParseTable {
                 then,
                 cmd_ou_bloco(),
                 cmd_if_prime,
+                action_create_if_else(),
             ],
         );
 
         table.set_entry(
             "cmd_if'",
             TokenType::ElseKeyword,
-            vec![senao, cmd_ou_bloco()],
+            vec![senao, cmd_ou_bloco(), action_create_if_else()],
         );
 
-        table.set_entry("cmd_if'", TokenType::Id, vec![epsilon()]);
-        table.set_entry("cmd_if'", TokenType::IfKeyword, vec![epsilon()]);
-        table.set_entry("cmd_if'", TokenType::WhileKeyword, vec![epsilon()]);
-        table.set_entry("cmd_if'", TokenType::DoKeyword, vec![epsilon()]);
-        table.set_entry("cmd_if'", TokenType::ForKeyword, vec![epsilon()]);
-        table.set_entry("cmd_if'", TokenType::BeginBlockPunctuation, vec![epsilon()]);
+        table.set_entry(
+            "cmd_if'",
+            TokenType::Id,
+            vec![epsilon(), action_create_if()],
+        );
+        table.set_entry(
+            "cmd_if'",
+            TokenType::IfKeyword,
+            vec![epsilon(), action_create_if()],
+        );
+        table.set_entry(
+            "cmd_if'",
+            TokenType::WhileKeyword,
+            vec![epsilon(), action_create_if()],
+        );
+        table.set_entry(
+            "cmd_if'",
+            TokenType::DoKeyword,
+            vec![epsilon(), action_create_if()],
+        );
+        table.set_entry(
+            "cmd_if'",
+            TokenType::ForKeyword,
+            vec![epsilon(), action_create_if()],
+        );
+        table.set_entry(
+            "cmd_if'",
+            TokenType::BeginBlockPunctuation,
+            vec![epsilon(), action_create_if()],
+        );
+        table.set_entry(
+            "cmd_if'",
+            TokenType::Eof,
+            vec![epsilon(), action_create_if()],
+        );
 
         table
     }
@@ -589,11 +719,20 @@ impl ParseTable {
         let rparen = Symbol::Terminal(TokenType::RParenOperator);
         let faca = Symbol::Terminal(TokenType::DoKeyword);
         let cmd_ou_bloco = Symbol::NonTerminal("cmd_ou_bloco".to_string());
+        let action_create_while = Symbol::Action(ActionKind::CreateWhile);
 
         table.set_entry(
             "cmd_while",
             TokenType::WhileKeyword,
-            vec![enquanto, lparen, cond, rparen, faca, cmd_ou_bloco],
+            vec![
+                enquanto,
+                lparen,
+                cond,
+                rparen,
+                faca,
+                cmd_ou_bloco,
+                action_create_while,
+            ],
         );
 
         table
@@ -610,6 +749,7 @@ impl ParseTable {
         let cond = Symbol::NonTerminal("cond".to_string());
         let rparen = Symbol::Terminal(TokenType::RParenOperator);
         let semicolon = Symbol::Terminal(TokenType::SemiColonPunctuation);
+        let action_create_do = Symbol::Action(ActionKind::CreateDoWhile);
 
         table.set_entry(
             "cmd_do",
@@ -622,6 +762,7 @@ impl ParseTable {
                 cond,
                 rparen,
                 semicolon,
+                action_create_do,
             ],
         );
 
@@ -640,6 +781,7 @@ impl ParseTable {
         let expr = Symbol::NonTerminal("E".to_string());
         let rparen = Symbol::Terminal(TokenType::RParenOperator);
         let cmd_ou_bloco = Symbol::NonTerminal("cmd_ou_bloco".to_string());
+        let action_create_for = Symbol::Action(ActionKind::CreateFor);
 
         table.set_entry(
             "cmd_for",
@@ -656,6 +798,7 @@ impl ParseTable {
                 expr,
                 rparen,
                 cmd_ou_bloco,
+                action_create_for,
             ],
         );
 

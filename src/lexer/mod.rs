@@ -1,4 +1,4 @@
-use std::{collections::HashMap, fs};
+use std::collections::HashMap;
 mod token;
 
 pub use token::{
@@ -20,9 +20,7 @@ pub struct Lexer<'a> {
 }
 
 impl<'a> Lexer<'a> {
-    pub fn new(file_path: &str, symbol_table: &'a mut HashMap<String, Token>) -> Self {
-        let contents = fs::read_to_string(file_path).expect("Failed to open the file entry.");
-
+    pub fn new(contents: String, symbol_table: &'a mut HashMap<String, Token>) -> Self {
         Self {
             file_content: contents.chars().collect(),
             ini: 0,

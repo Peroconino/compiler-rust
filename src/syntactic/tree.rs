@@ -1,16 +1,60 @@
-use crate::OperatorKind;
+use crate::{OperatorKind, RelopKind};
 
+#[derive(Debug, Clone, PartialEq)]
+pub enum Type {
+    Int,
+    Float,
+    Char,
+    Void,
+}
 // Nó da AST
-#[derive(Debug)]
+#[derive(Debug, Clone, PartialEq)]
 pub enum AstNode {
+    Program {
+        kind: Type,
+        body: Box<AstNode>,
+    },
+    Block {
+        decls: Vec<AstNode>,
+        stmts: Vec<AstNode>,
+    },
+    VarDecl {
+        kind: Type,
+        names: Vec<String>,
+    },
+    Assignment {
+        id: String,
+        expr: Box<AstNode>,
+    },
+    If {
+        cond: Box<AstNode>,
+        then_block: Box<AstNode>,
+        else_block: Option<Box<AstNode>>,
+    },
+    While {
+        cond: Box<AstNode>,
+        body: Box<AstNode>,
+    },
+    DoWhile {
+        body: Box<AstNode>,
+        cond: Box<AstNode>,
+    },
+    For {
+        id: String,
+        start: String,
+        end: String,
+        step: Box<AstNode>,
+        body: Box<AstNode>,
+    },
     BinaryOp {
         op: OperatorKind,
         left: Box<AstNode>,
         right: Box<AstNode>,
     },
-    UnaryOp {
-        op: OperatorKind,
-        expr: Box<AstNode>,
+    BinaryComp {
+        relop: RelopKind,
+        left: Box<AstNode>,
+        right: Box<AstNode>,
     },
     Number {
         value: String,
@@ -18,14 +62,12 @@ pub enum AstNode {
     Identifier {
         name: String,
     },
-    Assignment {
-        id: String,
-        expr: Box<AstNode>,
+    Literal {
+        value: String,
     },
-    OperatorMarker(OperatorKind),
-    Compound {
-        statements: Vec<AstNode>,
-    },
+    TypeWrapper(Type),
+    CondWrapper(RelopKind),
+    List(Vec<AstNode>),
     Empty,
 }
 
