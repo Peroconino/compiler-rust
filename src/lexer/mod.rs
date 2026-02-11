@@ -2,8 +2,15 @@ use std::collections::HashMap;
 mod token;
 
 pub use token::{
-    ErrorKind, KeywordKind, NumberKind, OperatorKind, PunctuationKind, RelopKind, Token, TokenType,
+    KeywordKind, LexerError, NumberKind, OperatorKind, PunctuationKind, RelopKind, Token,
+    TokenType, Type,
 };
+
+pub type SymbolTable = HashMap<String, SymbolEntry>;
+
+pub struct SymbolEntry {
+    pub kind: Option<Type>,
+}
 
 pub struct Lexer<'a> {
     pub file_content: Vec<char>,
@@ -16,11 +23,11 @@ pub struct Lexer<'a> {
     lookahead: Option<char>,
     prev_column: usize,
     prev_line: usize,
-    symbol_table: &'a mut HashMap<String, Token>,
+    symbol_table: &'a mut SymbolTable,
 }
 
 impl<'a> Lexer<'a> {
-    pub fn new(contents: String, symbol_table: &'a mut HashMap<String, Token>) -> Self {
+    pub fn new(contents: String, symbol_table: &'a mut SymbolTable) -> Self {
         Self {
             file_content: contents.chars().collect(),
             ini: 0,
@@ -143,12 +150,14 @@ impl<'a> Lexer<'a> {
     }
 
     fn insert_table(&mut self, token: Token) {
-        match token.clone() {
-            Token::Id { value, .. } | Token::Number { value, .. } => {
-                self.symbol_table.entry(value).or_insert(token);
+        match token {
+            Token::Id { value, .. } => {
+                self.symbol_table
+                    .entry(value)
+                    .or_insert(SymbolEntry { kind: None });
             }
             _ => {
-                panic!("Token is not insertable.");
+                panic!("Token não pode ser inserido: {}", token);
             }
         }
     }
@@ -270,7 +279,7 @@ impl<'a> Lexer<'a> {
                         return Err(format!(
                             "Erro léxico: {value}\n Tipo: {kind:?}\n linha: {line}\n coluna: {col}",
                             value = self.get_value(),
-                            kind = ErrorKind::UnclosedChar,
+                            kind = LexerError::UnclosedChar,
                             line = self.line,
                             col = self.get_column()
                         ));
@@ -278,14 +287,20 @@ impl<'a> Lexer<'a> {
                 }
                 // v4
                 6 => {
-                    let token = Token::Id {
-                        value: self.get_value(),
+                    let token = Token::Char {
+                        value: self
+                            .get_value()
+                            .strip_prefix("'")
+                            .expect("Era esperado um prefixo '")
+                            .strip_suffix("'")
+                            .expect("Era esperado um sufixo '")
+                            .chars()
+                            .next()
+                            .expect("Era esperado um caracter"),
                         line: self.line,
                         column: self.get_column(),
                     };
 
-                    //TODO inserir na tabela com os tipos corretos
-                    self.insert_table(token.clone());
                     return Ok(token);
                 }
                 // u2
@@ -375,7 +390,7 @@ impl<'a> Lexer<'a> {
                             return Err(format!(
                                 "Erro léxico: {value}\n Tipo: {kind:?}\n linha: {line}\n coluna: {col}",
                                 value = self.get_value(),
-                                kind = ErrorKind::InvalidTokenAfterExclamation,
+                                kind = LexerError::InvalidTokenAfterExclamation,
                                 line = self.line,
                                 col = self.get_column()
                             ));
@@ -384,7 +399,7 @@ impl<'a> Lexer<'a> {
                         return Err(format!(
                             "Erro léxico: {value}\n Tipo: {kind:?}\n linha: {line}\n coluna: {col}",
                             value = self.get_value(),
-                            kind = ErrorKind::InvalidTokenAfterExclamation,
+                            kind = LexerError::InvalidTokenAfterExclamation,
                             line = self.line,
                             col = self.get_column()
                         ));
@@ -466,7 +481,7 @@ impl<'a> Lexer<'a> {
                         return Err(format!(
                             "Erro léxico: {value}\n Tipo: {kind:?}\n linha: {line}\n coluna: {col}",
                             value = self.get_value(),
-                            kind = ErrorKind::MissingEqual,
+                            kind = LexerError::MissingEqual,
                             line = self.line,
                             col = self.get_column()
                         ));
@@ -508,7 +523,7 @@ impl<'a> Lexer<'a> {
                         return Err(format!(
                             "Erro léxico: {value}\n Tipo: {kind:?}\n linha: {line}\n coluna: {col}",
                             value = self.get_value(),
-                            kind = ErrorKind::MissingEqual,
+                            kind = LexerError::MissingEqual,
                             line = self.line,
                             col = self.get_column()
                         ));
@@ -556,7 +571,7 @@ impl<'a> Lexer<'a> {
                             return Err(format!(
                                 "Erro léxico: {value}\n Tipo: {kind:?}\n linha: {line}\n coluna: {col}",
                                 value = self.get_value(),
-                                kind = ErrorKind::FractionEndedWithADot,
+                                kind = LexerError::FractionEndedWithADot,
                                 line = self.line,
                                 col = self.get_column()
                             ));
@@ -569,7 +584,7 @@ impl<'a> Lexer<'a> {
                         return Err(format!(
                             "Erro léxico: {value}\n Tipo: {kind:?}\n linha: {line}\n coluna: {col}",
                             value = self.get_value(),
-                            kind = ErrorKind::FractionEndedWithADot,
+                            kind = LexerError::FractionEndedWithADot,
                             line = self.line,
                             col = self.get_column()
                         ));
@@ -583,8 +598,6 @@ impl<'a> Lexer<'a> {
                         line: self.line,
                         column: self.get_column(),
                     };
-
-                    self.insert_table(token.clone());
 
                     return Ok(token);
                 }
@@ -601,7 +614,7 @@ impl<'a> Lexer<'a> {
                             return Err(format!(
                                 "Erro léxico: {value}\n Tipo: {kind:?}\n linha: {line}\n coluna: {col}",
                                 value = self.get_value(),
-                                kind = ErrorKind::EndedWithEExpoent,
+                                kind = LexerError::EndedWithEExpoent,
                                 line = self.line,
                                 col = self.get_column()
                             ));
@@ -611,7 +624,7 @@ impl<'a> Lexer<'a> {
                         return Err(format!(
                             "Erro léxico: {value}\n Tipo: {kind:?}\n linha: {line}\n coluna: {col}",
                             value = self.get_value(),
-                            kind = ErrorKind::EndedWithEExpoent,
+                            kind = LexerError::EndedWithEExpoent,
                             line = self.line,
                             col = self.get_column()
                         ));
@@ -625,8 +638,6 @@ impl<'a> Lexer<'a> {
                         line: self.line,
                         column: self.get_column(),
                     };
-
-                    self.insert_table(token.clone());
 
                     return Ok(token);
                 }
@@ -642,7 +653,7 @@ impl<'a> Lexer<'a> {
                         return Err(format!(
                             "Erro léxico: {value}\n Tipo: {kind:?}\n linha: {line}\n coluna: {col}",
                             value = self.get_value(),
-                            kind = ErrorKind::EndedAfterExpoentSign,
+                            kind = LexerError::EndedAfterExpoentSign,
                             line = self.line,
                             col = self.get_column()
                         ));
@@ -1462,7 +1473,7 @@ impl<'a> Lexer<'a> {
         Err(format!(
             "Erro léxico: {value}\n Tipo: {kind:?}\n linha: {line}\n coluna: {col}",
             value = self.get_value(),
-            kind = ErrorKind::UnknownToken,
+            kind = LexerError::UnknownToken,
             line = self.line,
             col = self.get_column()
         ))

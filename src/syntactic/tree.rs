@@ -1,12 +1,5 @@
-use crate::{OperatorKind, RelopKind};
+use crate::{OperatorKind, RelopKind, Type};
 
-#[derive(Debug, Clone, PartialEq)]
-pub enum Type {
-    Int,
-    Float,
-    Char,
-    Void,
-}
 // Nó da AST
 #[derive(Debug, Clone, PartialEq)]
 pub enum AstNode {
@@ -41,10 +34,14 @@ pub enum AstNode {
     },
     For {
         id: String,
-        start: String,
-        end: String,
+        start: u32,
+        end: u32,
         step: Box<AstNode>,
         body: Box<AstNode>,
+    },
+    UnaryOp {
+        // aceita apenas subtração como unário então não precisa de campo 'op: OperatorKind'
+        expr: Box<AstNode>,
     },
     BinaryOp {
         op: OperatorKind,
@@ -63,35 +60,32 @@ pub enum AstNode {
         name: String,
     },
     Literal {
-        value: String,
+        value: char,
     },
     TypeWrapper(Type),
     CondWrapper(RelopKind),
     List(Vec<AstNode>),
-    Empty,
 }
 
 impl AstNode {
-    // Função para imprimir AST de forma bonita
+    // TODO melhorar essa função para aceitar os novos nós
     pub fn print_ast(ast: &AstNode, indent: usize) {
-        match ast {
-            AstNode::BinaryOp { op, left, right } => {
-                println!("{}├─ BinaryOp: {:?}", " ".repeat(indent * 2), op);
-                AstNode::print_ast(left, indent + 1);
-                AstNode::print_ast(right, indent + 1);
-            }
-            AstNode::Number { value } => {
-                println!("{}├─ Number: {}", " ".repeat(indent * 2), value);
-            }
-            AstNode::Identifier { name } => {
-                println!("{}├─ Identifier: {}", " ".repeat(indent * 2), name);
-            }
-            AstNode::Empty => {
-                println!("{}├─ Empty", " ".repeat(indent * 2));
-            }
-            _ => {
-                println!("{}├─ {:?}", " ".repeat(indent * 2), ast);
-            }
-        }
+        todo!();
+        // match ast {
+        //     AstNode::BinaryOp { op, left, right } => {
+        //         println!("{}├─ BinaryOp: {:?}", " ".repeat(indent * 2), op);
+        //         AstNode::print_ast(left, indent + 1);
+        //         AstNode::print_ast(right, indent + 1);
+        //     }
+        //     AstNode::Number { value } => {
+        //         println!("{}├─ Number: {}", " ".repeat(indent * 2), value);
+        //     }
+        //     AstNode::Identifier { name } => {
+        //         println!("{}├─ Identifier: {}", " ".repeat(indent * 2), name);
+        //     }
+        //     _ => {
+        //         println!("{}├─ {:?}", " ".repeat(indent * 2), ast);
+        //     }
+        // }
     }
 }

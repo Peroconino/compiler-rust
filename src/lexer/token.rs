@@ -1,11 +1,22 @@
 use std::fmt::{Display, Error, Formatter};
 
+#[allow(unused)]
+#[derive(Debug, Clone, PartialEq)]
+pub enum Type {
+    Int,
+    Float,
+    Char,
+    Void,
+}
+
+#[allow(unused)]
 #[derive(Debug, Clone, PartialEq, Eq, Hash)]
 pub enum NumberKind {
     Integer,
     Float,
 }
 
+#[allow(unused)]
 #[derive(Debug, Clone, PartialEq, Eq, Hash)]
 pub enum RelopKind {
     GT,
@@ -16,6 +27,7 @@ pub enum RelopKind {
     GE,
 }
 
+#[allow(unused)]
 #[derive(Debug, Clone, PartialEq, Eq, Hash)]
 pub enum OperatorKind {
     Sum,
@@ -27,6 +39,7 @@ pub enum OperatorKind {
     Pardir,
 }
 
+#[allow(unused)]
 #[derive(Debug, Clone, PartialEq, Eq, Hash)]
 pub enum PunctuationKind {
     Assigment,
@@ -36,6 +49,7 @@ pub enum PunctuationKind {
     EndBlock,
 }
 
+#[allow(unused)]
 #[derive(Debug, Clone, PartialEq, Eq, Hash)]
 pub enum KeywordKind {
     If,
@@ -53,8 +67,9 @@ pub enum KeywordKind {
     Void,
 }
 
+#[allow(unused)]
 #[derive(Debug, Clone, PartialEq, Eq, Hash)]
-pub enum ErrorKind {
+pub enum LexerError {
     UnclosedChar,
     InvalidTokenAfterExclamation,
     FractionEndedWithADot,
@@ -64,10 +79,16 @@ pub enum ErrorKind {
     UnknownToken,
 }
 
+#[allow(unused)]
 #[derive(Debug, Clone, PartialEq, Eq, Hash)]
 pub enum Token {
     Id {
         value: String,
+        line: usize,
+        column: usize,
+    },
+    Char {
+        value: char,
         line: usize,
         column: usize,
     },
@@ -112,6 +133,17 @@ impl Display for Token {
                     f,
                     "<Id, value='{}', line={}, column={}>",
                     value, line, column,
+                );
+            }
+            Self::Char {
+                value,
+                line,
+                column,
+            } => {
+                let _ = write!(
+                    f,
+                    "<Char, value='{}', line={}, column={}>",
+                    value, line, column
                 );
             }
             Self::Number {
@@ -204,10 +236,12 @@ impl Display for Token {
     }
 }
 
+#[allow(unused)]
 #[derive(Debug, Clone, PartialEq, Eq, Hash)]
 pub enum TokenType {
     Id,
     Number,
+    CharValue,
     GTOperator,
     LTOperator,
     LEOperator,
@@ -240,13 +274,6 @@ pub enum TokenType {
     MainKeyword,
     VoidKeyword,
     Eof,
-    UnclosedCharErr,
-    InvalidTokenAfterExclamationErr,
-    FractionEndedWithADotErr,
-    EndedWithEExpoentErr,
-    EndedAfterExpoentSignErr,
-    MissingEqualErr,
-    UknownTokenErr,
 }
 
 impl From<Token> for TokenType {
@@ -261,7 +288,7 @@ impl From<Token> for TokenType {
                 kind: NumberKind::Float,
                 ..
             } => Self::Number,
-
+            Token::Char { .. } => Self::CharValue,
             Token::Relop {
                 kind: RelopKind::GT,
                 ..

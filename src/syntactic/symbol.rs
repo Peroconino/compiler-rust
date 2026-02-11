@@ -13,6 +13,7 @@ pub enum Symbol {
 #[derive(Clone, Debug)]
 pub enum ActionKind {
     Math(OperatorKind),
+    CreateUnaryOp,
 
     // Comandos
     Assign,

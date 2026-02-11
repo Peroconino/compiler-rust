@@ -1,11 +1,9 @@
-use std::collections::HashMap;
-
 pub use crate::{
-    KeywordKind, Lexer, OperatorKind, RelopKind, Token, TokenType,
+    lexer::{KeywordKind, Lexer, OperatorKind, RelopKind, SymbolTable, Token, TokenType, Type},
     syntactic::{
         parse_table::ParseTable,
         symbol::{ActionKind, Symbol},
-        tree::{AstNode, Type},
+        tree::AstNode,
     },
 };
 
@@ -25,7 +23,7 @@ impl<'a> Parser<'a> {
     pub fn new(
         content: String,
         parse_table: ParseTable,
-        symbol_table: &'a mut HashMap<String, Token>,
+        symbol_table: &'a mut SymbolTable,
     ) -> Self {
         Parser {
             lexer: Lexer::new(content, symbol_table),
@@ -116,7 +114,6 @@ impl<'a> Parser<'a> {
                                 let stmts_node = ast_stack.pop().unwrap();
                                 let stmts = match stmts_node {
                                     AstNode::List(vec) => vec,
-                                    AstNode::Empty => vec![],
                                     _ => {
                                         return Err(format!(
                                             "Erro: Esperava-se uma lista de comandos, recebeu {:?}",
@@ -128,7 +125,6 @@ impl<'a> Parser<'a> {
                                 let decls_node = ast_stack.pop().unwrap();
                                 let decls = match decls_node {
                                     AstNode::List(vec) => vec,
-                                    AstNode::Empty => vec![],
                                     _ => {
                                         return Err(format!(
                                             "Erro: Esperava-se uma lista de declarações, recebeu {:?}",
@@ -319,7 +315,9 @@ impl<'a> Parser<'a> {
                                 let id_node = ast_stack.pop().unwrap();
 
                                 let end = match end_node {
-                                    AstNode::Number { value } => value,
+                                    AstNode::Number { value } => {
+                                        value.parse().expect("Esperado um número inteiro.")
+                                    }
                                     _ => {
                                         return Err(format!(
                                             "Era esperado um número. Recebido: {:?}",
@@ -329,7 +327,9 @@ impl<'a> Parser<'a> {
                                 };
 
                                 let start = match start_node {
-                                    AstNode::Number { value } => value,
+                                    AstNode::Number { value } => {
+                                        value.parse().expect("Esperado um número inteiro.")
+                                    }
                                     _ => {
                                         return Err(format!(
                                             "Era esperado um número. Recebido: {:?}",
@@ -379,6 +379,19 @@ impl<'a> Parser<'a> {
                                 );
                             }
                         }
+                        ActionKind::CreateUnaryOp => {
+                            self.stack.pop();
+                            if !ast_stack.is_empty() {
+                                let expr = Box::new(ast_stack.pop().unwrap());
+
+                                ast_stack.push(AstNode::UnaryOp { expr });
+                            } else {
+                                return Err(
+                                    "Era esperado ao menos 1 nodo, para criar um operador unário"
+                                        .to_string(),
+                                );
+                            }
+                        }
                     }
                 }
                 Symbol::Epsilon => {
@@ -421,6 +434,9 @@ impl<'a> Parser<'a> {
                         ast_stack.push(AstNode::Number {
                             value: value.clone(),
                         });
+                    }
+                    Token::Char { value, .. } => {
+                        ast_stack.push(AstNode::Literal { value: *value });
                     }
                     Token::Keyword {
                         kind: KeywordKind::Char,

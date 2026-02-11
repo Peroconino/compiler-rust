@@ -390,9 +390,9 @@ impl ParseTable {
      E' → + T E' | - T E' | ε
      T  → F T'
      T' → * F T' | / F T' | ε
-     F  → U F'
+     F  → - F | U F'
      F' → ** U F' | ε
-     U  → id | num | ( E )
+     U  → id | num | char | ( E )
     */
     fn create_expression_parse_table(mut table: ParseTable) -> ParseTable {
         // Define os símbolos
@@ -413,6 +413,7 @@ impl ParseTable {
         let rparen = || Symbol::Terminal(TokenType::RParenOperator);
         let id = || Symbol::Terminal(TokenType::Id);
         let num = || Symbol::Terminal(TokenType::Number);
+        let char = || Symbol::Terminal(TokenType::CharValue);
         let epsilon = || Symbol::Epsilon;
 
         // Adicione definições de Ação:
@@ -421,11 +422,14 @@ impl ParseTable {
         let action_mult = || Symbol::Action(ActionKind::Math(OperatorKind::Mult));
         let action_div = || Symbol::Action(ActionKind::Math(OperatorKind::Div));
         let action_exp = || Symbol::Action(ActionKind::Math(OperatorKind::Exp));
+        let action_unary = || Symbol::Action(ActionKind::CreateUnaryOp);
 
         // Produção 1: E → T E'
         table.set_entry("E", TokenType::Id, vec![t(), e_prime()]);
         table.set_entry("E", TokenType::Number, vec![t(), e_prime()]);
+        table.set_entry("E", TokenType::CharValue, vec![t(), e_prime()]);
         table.set_entry("E", TokenType::LParenOperator, vec![t(), e_prime()]);
+        table.set_entry("E", TokenType::MinusOperator, vec![t(), e_prime()]);
 
         // Produção 2: E' → + T E'
         table.set_entry(
@@ -455,7 +459,9 @@ impl ParseTable {
         // Produção 5: T → F T'
         table.set_entry("T", TokenType::Id, vec![f(), t_prime()]);
         table.set_entry("T", TokenType::Number, vec![f(), t_prime()]);
+        table.set_entry("T", TokenType::CharValue, vec![f(), e_prime()]);
         table.set_entry("T", TokenType::LParenOperator, vec![f(), t_prime()]);
+        table.set_entry("T", TokenType::MinusOperator, vec![f(), t_prime()]);
 
         // Produção 6: T' → * F T'
         table.set_entry(
@@ -487,7 +493,15 @@ impl ParseTable {
         // Produção 9: F → U F'
         table.set_entry("F", TokenType::Id, vec![u(), f_prime()]);
         table.set_entry("F", TokenType::Number, vec![u(), f_prime()]);
+        table.set_entry("F", TokenType::CharValue, vec![u(), e_prime()]);
         table.set_entry("F", TokenType::LParenOperator, vec![u(), f_prime()]);
+
+        // Produção adicional (unarios): F -> - F
+        table.set_entry(
+            "F",
+            TokenType::MinusOperator,
+            vec![minus(), f(), action_unary()],
+        );
 
         // Produção 10: F' → ** U F'
         table.set_entry(
@@ -509,13 +523,16 @@ impl ParseTable {
         table.set_entry("F'", TokenType::LEOperator, vec![epsilon()]);
         table.set_entry("F'", TokenType::NEOperator, vec![epsilon()]);
         table.set_entry("F'", TokenType::EQOperator, vec![epsilon()]);
-        table.set_entry("F'", TokenType::Eof, vec![epsilon()]);
+        table.set_entry("F'", TokenType::Eof, vec![epsilon()]); // pra conseguir rodar testes
 
         // Produção 9: U → id
         table.set_entry("U", TokenType::Id, vec![id()]);
 
         // Produção 10: U → num
         table.set_entry("U", TokenType::Number, vec![num()]);
+
+        // Produção adicional: U → char
+        table.set_entry("U", TokenType::CharValue, vec![char()]);
 
         // Produção 11: U → ( E )
         table.set_entry(

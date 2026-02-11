@@ -13,10 +13,50 @@ mod tests {
     fn create_instance<'a>(
         contents: String,
         start_symbol: &str,
-        symbol_table: &'a mut HashMap<String, Token>,
+        symbol_table: &'a mut SymbolTable,
     ) -> Parser<'a> {
         let parse_table = ParseTable::create_parse_table(start_symbol);
         Parser::new(contents, parse_table, symbol_table)
+    }
+
+    #[test]
+    fn test_unary_ast_tree() {
+        let mut symbol_table = HashMap::new();
+        let mut parser = create_instance("-6 ".into(), "E", &mut symbol_table);
+
+        let result = parser.parse();
+
+        assert!(result.is_ok(), "O parser retornou erro: {:?}", result.err());
+
+        let expected_ast = AstNode::UnaryOp {
+            expr: Box::new(AstNode::Number { value: "6".into() }),
+        };
+
+        assert_eq!(
+            result.unwrap(),
+            expected_ast,
+            "A árvore gerada não corresponde a esperada"
+        );
+
+        let mut parser = create_instance("-(x * 2) ".into(), "E", &mut symbol_table);
+
+        let result = parser.parse();
+
+        assert!(result.is_ok(), "O parser retornou erro: {:?}", result.err());
+
+        let expected_ast = AstNode::UnaryOp {
+            expr: Box::new(AstNode::BinaryOp {
+                op: OperatorKind::Mult,
+                left: Box::new(AstNode::Identifier { name: "x".into() }),
+                right: Box::new(AstNode::Number { value: "2".into() }),
+            }),
+        };
+
+        assert_eq!(
+            result.unwrap(),
+            expected_ast,
+            "A árvore gerada não corresponde a esperada"
+        );
     }
 
     #[test]
@@ -261,9 +301,7 @@ mod tests {
                     left: Box::new(AstNode::Identifier {
                         name: "c".to_string(),
                     }),
-                    right: Box::new(AstNode::Identifier {
-                        name: "'a'".to_string(),
-                    }),
+                    right: Box::new(AstNode::Literal { value: 'a' }),
                 }),
                 then_block: Box::new(AstNode::Block {
                     decls: vec![],
@@ -400,8 +438,8 @@ mod tests {
 
         let expected_ast = AstNode::For {
             id: "x".to_string(),
-            start: "0".to_string(),
-            end: "10".to_string(),
+            start: "0".parse().unwrap(),
+            end: "10".parse().unwrap(),
             step: Box::new(AstNode::BinaryOp {
                 op: OperatorKind::Sum,
                 left: Box::new(AstNode::Identifier {
@@ -495,9 +533,7 @@ mod tests {
                 stmts: vec![
                     AstNode::Assignment {
                         id: "c".to_string(),
-                        expr: Box::new(AstNode::Identifier {
-                            name: "'a'".to_string(),
-                        }),
+                        expr: Box::new(AstNode::Literal { value: 'a' }),
                     },
                     AstNode::Assignment {
                         id: "x".to_string(),
@@ -542,9 +578,7 @@ mod tests {
                                 left: Box::new(AstNode::Identifier {
                                     name: "c".to_string(),
                                 }),
-                                right: Box::new(AstNode::Identifier {
-                                    name: "'a'".to_string(),
-                                }),
+                                right: Box::new(AstNode::Literal { value: 'a' }),
                             }),
                             then_block: Box::new(AstNode::Block {
                                 decls: vec![],
@@ -565,9 +599,7 @@ mod tests {
                                 decls: vec![],
                                 stmts: vec![AstNode::Assignment {
                                     id: "c".to_string(),
-                                    expr: Box::new(AstNode::Identifier {
-                                        name: "'b'".to_string(),
-                                    }),
+                                    expr: Box::new(AstNode::Literal { value: 'b' }),
                                 }],
                             })),
                         })),
